@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.bg-gradient {
+  background: linear-gradient(90deg, #181818 0%, #8382e9 47.5%, #f55e6f 100%);
+}
+
+.ecg-table {
+  border-bottom: 2px solid transparent;
+  
+  /* Gradient border */
+  border-image: linear-gradient(90deg, #8382e9 0%, #8382e9 47.5%, #f55e6f 100%);
+  border-image-slice: 1;
+}
+
+.modal-overlay {
+  background: rgba(38, 39, 43, 0.85);
+  backdrop-filter: blur(2px);
+}
+
+.lds-ring,
+.lds-ring div {
+  box-sizing: border-box;
+}
+.lds-ring {
+  display: inline-block;
+  position: relative;
+  width: 12px;
+  height: 12px;
+}
+.lds-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 9.6px;
+  height: 9.6px;
+  margin: 1.2px;
+  border: 1.2px solid currentColor;
+  border-radius: 50%;
+  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: currentColor transparent transparent transparent;
+}
+.lds-ring div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+.lds-ring div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+.lds-ring div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+@keyframes lds-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.scan-location-column,
+.scan-location-filter,
+.acquisition-date-column,
+.ai-result-column,
+.ai-result-filter,
+.acquisition-date-filter,
+.top-bar-account-icon,
+.priority-column {
+  display: none;
+}
+
+.acquisition-date-column {
+  width: 170px;
+}
+
+.ai-result-column,
+.priority-column,
+.gender-column {
+  width: 140px;
+}
+
+@media (min-width: 350px) {
+  .top-bar-account-icon {
+    display: table-cell;
+  }
+}
+
+@media (min-width: 1120px) {
+  .ai-result-column {
+    display: table-cell;
+  }
+  .ai-result-filter {
+    display: flex;
+  }
+}
+
+@media (min-width: 1020px) {
+  .scan-location-column {
+    display: table-cell;
+  }
+  .scan-location-filter {
+    display: flex;
+  }
+}
+
+@media (min-width: 1280px) {
+  .priority-column {
+    display: table-cell;
+  }
+  .priority-filter {
+    display: flex;
+  }
+}
+
+@media (min-width: 850px) {
+  .acquisition-date-column {
+    display: table-cell;
+  }
+  .acquisition-date-filter {
+    display: flex;
+  }
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+/* Printing related definitons */
+@page {
+  margin: 0;
+}
+
+@page letter-portrait {
+  size: letter portrait;
+}
+@page letter-landscape {
+  size: letter landscape;
+}
+@page a4-portrait {
+  size: letter portrait;
+}
+@page a4-landscape {
+  size: letter landscape;
+}
+
+.tt-pos-right {
+  left: 110% !important;
+  top: -24% !important;
+}
