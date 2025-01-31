@@ -1,117 +1,157 @@
+import { useAuthStore } from '@/stores/authStore';
 import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useAuthStore } from '../stores/authStore';
 
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
   onlineUsers: OnlineUser[];
-  sendMessage: (event: string, data: any) => void;
+  connect: () => void;
+  disconnect: () => void;
 }
 
 interface OnlineUser {
   userId: string;
   username: string;
-  status: 'online' | 'away' | 'offline';
-  lastActive: Date;
+  rating: number;
+  status: 'online' | 'away';
 }
 
-const SocketContext = createContext<SocketContextType | undefined>(undefined);
+export const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = React.useState(false);
   const [onlineUsers, setOnlineUsers] = React.useState<OnlineUser[]>([]);
-  const { token, user, logout } = useAuthStore();
+  const isAuthenticated = useAuthStore((store) => store.isAuthenticated); // Custom hook to manage auth state
+  const token = useAuthStore((store) => store.token);
 
-  const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:3000';
+  const connect = React.useCallback(() => {
+    if (socketRef.current?.connected || !isAuthenticated) return;
 
-  useEffect(() => {
-    let heartbeatInterval: NodeJS.Timeout;
+    if (!token) return;
 
-    const connectSocket = () => {
-      if (!token || !user || socketRef.current?.connected) return;
+    const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-      const socket = io(SOCKET_URL, {
-        auth: { token },
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-      });
+    const socket = io(SOCKET_URL, {
+      auth: { token },
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
 
-      socketRef.current = socket;
+    socketRef.current = socket;
 
-      socket.on('connect', () => {
-        console.log('Socket connected');
-        setIsConnected(true);
+    socket.on('connect', () => {
+      console.log('Socket connected');
+      setIsConnected(true);
 
-        // Start heartbeat
-        heartbeatInterval = setInterval(() => {
-          socket.emit('heartbeat');
-        }, 25000); // 25 seconds
-      });
+      // Start heartbeat
+      const heartbeatInterval = setInterval(() => {
+        socket.emit('heartbeat');
+      }, 25000);
 
-      socket.on('connect_status', (data) => {
-        console.log('Connection status:', data);
-      });
-
-      socket.on('user_list_update', (users: OnlineUser[]) => {
-        setOnlineUsers(users);
-      });
-
-      socket.on('force_disconnect', ({ reason, message }) => {
-        console.log('Forced disconnect:', message);
-        if (reason === 'session_timeout') {
-          logout();
-        }
-        socket.disconnect();
-      });
-
+      // Clean up heartbeat on disconnect
       socket.on('disconnect', () => {
-        console.log('Socket disconnected');
-        setIsConnected(false);
         clearInterval(heartbeatInterval);
       });
+    });
 
-      socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error);
-        setIsConnected(false);
-      });
+    socket.on('connect_status', (data) => {
+      console.log('Connection status:', data);
+    });
 
-      // Custom error handling
-      socket.on('error', (error) => {
-        console.error('Socket error:', error);
-      });
+    socket.on('user_list_update', (users: OnlineUser[]) => {
+      setOnlineUsers(users);
+    });
 
-      return socket;
-    };
+    socket.on('disconnect', () => {
+      console.log('Socket disconnected');
+      setIsConnected(false);
+    });
 
-    const socket = connectSocket();
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+      setIsConnected(false);
+    });
+  }, [isAuthenticated]);
 
-    // Cleanup function
-    return () => {
-      clearInterval(heartbeatInterval);
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
-    };
-  }, [token, user]);
-
-  const sendMessage = (event: string, data: any) => {
-    if (socketRef.current?.connected) {
-      socketRef.current.emit(event, data);
-    } else {
-      console.warn('Socket is not connected');
+  const disconnect = React.useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+      setIsConnected(false);
+      setOnlineUsers([]);
     }
-  };
+  }, []);
+
+  // Connect when auth state changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      connect();
+    } else {
+      disconnect();
+    }
+
+    return () => {
+      disconnect();
+    };
+  }, [isAuthenticated, connect, disconnect]);
 
   const value = {
     socket: socketRef.current,
     isConnected,
     onlineUsers,
-    sendMessage,
+    connect,
+    disconnect,
   };
 
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
+};
+
+// Create AuthContext to manage authentication state
+interface AuthContextType {
+  isAuthenticated: boolean;
+  getToken: () => string | null;
+  login: (token: string) => void;
+  logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
+    return !!localStorage.getItem('token');
+  });
+
+  const getToken = React.useCallback(() => {
+    return localStorage.getItem('token');
+  }, []);
+
+  const login = React.useCallback((token: string) => {
+    localStorage.setItem('token', token);
+    setIsAuthenticated(true);
+  }, []);
+
+  const logout = React.useCallback(() => {
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
+  }, []);
+
+  const value = {
+    isAuthenticated,
+    getToken,
+    login,
+    logout,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useSocket = () => {
+  const context = useContext(SocketContext);
+  if (context === undefined) {
+    throw new Error('useSocket must be used within a SocketProvider');
+  }
+  return context;
 };
