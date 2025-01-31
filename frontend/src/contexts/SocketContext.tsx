@@ -1,13 +1,16 @@
 import { useAuthStore } from '@/stores/authStore';
-import React, { createContext, useContext, useEffect, useRef } from 'react';
+import { UserStatus } from '@/types';
+import React, { createContext, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
   onlineUsers: OnlineUser[];
+  currentSession: UserSession | null;
   connect: () => void;
   disconnect: () => void;
+  updateUserStatus: (status: UserStatus) => void;
 }
 
 interface OnlineUser {
@@ -16,7 +19,13 @@ interface OnlineUser {
   firstName: string;
   lastName: string;
   rating: number;
-  status: 'online' | 'away' | 'in-game';
+  status: UserStatus;
+}
+
+interface UserSession {
+  userId: string;
+  status: UserStatus;
+  lastActivity: Date;
 }
 
 export const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -25,13 +34,37 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = React.useState(false);
   const [onlineUsers, setOnlineUsers] = React.useState<OnlineUser[]>([]);
-  const isAuthenticated = useAuthStore((store) => store.isAuthenticated); // Custom hook to manage auth state
+  const [currentSession, setCurrentSession] = React.useState<UserSession | null>(null);
+
+  const isAuthenticated = useAuthStore((store) => store.isAuthenticated);
   const token = useAuthStore((store) => store.token);
+  const user = useAuthStore((store) => store.user);
+
+  const updateUserStatus = React.useCallback((status: UserStatus) => {
+    if (!socketRef.current?.connected) return;
+
+    socketRef.current.emit('user:status_update', { status });
+
+    // Update local session state
+    setCurrentSession((prev) => (prev ? { ...prev, status, lastActivity: new Date() } : null));
+  }, []);
+
+  const handleUserStatusUpdate = React.useCallback(
+    (data: { userId: string; status: UserStatus }) => {
+      setOnlineUsers((prevUsers) =>
+        prevUsers.map((user) => (user.userId === data.userId ? { ...user, status: data.status } : user)),
+      );
+
+      // Update current session if it's the current user
+      if (data.userId === user?.id) {
+        setCurrentSession((prev) => (prev ? { ...prev, status: data.status, lastActivity: new Date() } : null));
+      }
+    },
+    [user?.id],
+  );
 
   const connect = React.useCallback(() => {
-    if (socketRef.current?.connected || !isAuthenticated) return;
-
-    if (!token) return;
+    if (socketRef.current?.connected || !isAuthenticated || !token || !user) return;
 
     const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -48,10 +81,17 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.log('Socket connected');
       setIsConnected(true);
 
+      // Initialize current session
+      setCurrentSession({
+        userId: user.id,
+        status: UserStatus.ONLINE,
+        lastActivity: new Date(),
+      });
+
       // Start heartbeat
       const heartbeatInterval = setInterval(() => {
         socket.emit('heartbeat');
-      }, 25000);
+      }, 5000);
 
       // Clean up heartbeat on disconnect
       socket.on('disconnect', () => {
@@ -59,24 +99,35 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
     });
 
-    socket.on('connect_status', (data) => {
-      console.log('Connection status:', data);
-    });
-
     socket.on('user_list_update', (users: OnlineUser[]) => {
       setOnlineUsers(users);
     });
 
+    socket.on('user:status_changed', handleUserStatusUpdate);
+
     socket.on('disconnect', () => {
       console.log('Socket disconnected');
       setIsConnected(false);
+      setCurrentSession(null);
     });
 
     socket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
       setIsConnected(false);
+      setCurrentSession(null);
     });
-  }, [isAuthenticated]);
+
+    // Auto-away detection
+    const autoAwayTimeout = setTimeout(() => {
+      if (currentSession?.status === 'online') {
+        updateUserStatus('away');
+      }
+    }, 300000); // 5 minutes
+
+    return () => {
+      clearTimeout(autoAwayTimeout);
+    };
+  }, [isAuthenticated, token, user, handleUserStatusUpdate, updateUserStatus]);
 
   const disconnect = React.useCallback(() => {
     if (socketRef.current) {
@@ -84,10 +135,10 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       socketRef.current = null;
       setIsConnected(false);
       setOnlineUsers([]);
+      setCurrentSession(null);
     }
   }, []);
 
-  // Connect when auth state changes
   useEffect(() => {
     if (isAuthenticated) {
       console.log('@@ try connecting socket.io');
@@ -105,56 +156,11 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     socket: socketRef.current,
     isConnected,
     onlineUsers,
+    currentSession,
     connect,
     disconnect,
+    updateUserStatus,
   };
 
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
-};
-
-// Create AuthContext to manage authentication state
-interface AuthContextType {
-  isAuthenticated: boolean;
-  getToken: () => string | null;
-  login: (token: string) => void;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
-    return !!localStorage.getItem('token');
-  });
-
-  const getToken = React.useCallback(() => {
-    return localStorage.getItem('token');
-  }, []);
-
-  const login = React.useCallback((token: string) => {
-    localStorage.setItem('token', token);
-    setIsAuthenticated(true);
-  }, []);
-
-  const logout = React.useCallback(() => {
-    localStorage.removeItem('token');
-    setIsAuthenticated(false);
-  }, []);
-
-  const value = {
-    isAuthenticated,
-    getToken,
-    login,
-    logout,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-export const useSocket = () => {
-  const context = useContext(SocketContext);
-  if (context === undefined) {
-    throw new Error('useSocket must be used within a SocketProvider');
-  }
-  return context;
 };

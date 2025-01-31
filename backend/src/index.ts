@@ -9,6 +9,9 @@ import { createServer, Server as HTTPServer } from "http";
 import { Server } from "socket.io";
 import SocketService from "./socketio/socketServer";
 
+import * as cors from "cors"; // Import cors
+import { CorsOptions } from "cors"; // Import CorsOptions type
+
 dotenv.config();
 
 // Database connection and server start
@@ -16,7 +19,15 @@ AppDataSource.initialize()
   .then(async () => {
     var app = require("express")();
     var http = require("http").Server(app);
-    var io = require("socket.io")(http);
+    // var io = require("socket.io")(http);
+    var io = new Server(http, {
+      cors: {
+        origin: "*", // Allow all origins temporarily
+        methods: ["GET", "POST"],
+        credentials: true,
+        allowedHeaders: ["Authorization", "Content-Type"],
+      },
+    });
     const socketServer = new SocketService(io);
 
     http.listen(PORT, () => {
@@ -26,6 +37,16 @@ AppDataSource.initialize()
     // Middleware
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
+    // Enable CORS for all routes
+    app.use(
+      cors({
+        origin: true, // Allow all origins temporarily for testing
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        exposedHeaders: ["set-cookie"],
+      })
+    );
 
     // Routes
     app.use("/api/auth", userRouter);

@@ -1,12 +1,14 @@
-// src/socketio/socketServer.ts
 import { Server as SocketIOServer, Socket } from "socket.io";
 import * as jwt from "jsonwebtoken";
 import { AppDataSource } from "../data-source";
 import { User } from "../entity/User";
 import * as dotenv from "dotenv";
+import { UserStatus } from "../types";
 
 dotenv.config();
 const { JWT_SECRET = "password_secret" } = process.env;
+
+type UserStatus = "online" | "away" | "in-game";
 
 interface ConnectedUser {
   socketId: string;
@@ -14,8 +16,9 @@ interface ConnectedUser {
   firstName: string;
   lastName: string;
   username: string;
-  status: "online" | "away";
+  status: UserStatus;
   lastActive: Date;
+  rating: number;
 }
 
 interface TokenPayload {
@@ -28,12 +31,14 @@ class SocketService {
   private connectedUsers: Map<string, ConnectedUser> = new Map();
   private userRepository = AppDataSource.getRepository(User);
   private readonly sessionTimeout: number = 1000 * 60 * 30; // 30 minutes
+  private readonly autoAwayTimeout: number = 1000 * 60 * 5; // 5 minutes
 
   constructor(io: SocketIOServer) {
     this.io = io;
     this.initialize();
     this.startSessionMonitoring();
   }
+
   private verifyToken(token: string): TokenPayload | null {
     try {
       if (!JWT_SECRET) throw new Error("JWT_SECRET is not defined");
@@ -51,19 +56,29 @@ class SocketService {
         const timeDiff = now.getTime() - user.lastActive.getTime();
         if (timeDiff > this.sessionTimeout) {
           this.disconnectUser(userId);
-        } else if (timeDiff > 60000) {
-          // 1 minute
+        } else if (
+          timeDiff > this.autoAwayTimeout &&
+          user.status === "online"
+        ) {
           this.updateUserStatus(userId, "away");
         }
       });
     }, 30000); // Check every 30 seconds
   }
 
-  private async updateUserStatus(userId: string, status: "online" | "away") {
+  private async updateUserStatus(userId: string, status: UserStatus) {
     const user = this.connectedUsers.get(userId);
+
     if (user) {
       user.status = status;
+      user.lastActive = new Date();
       this.connectedUsers.set(userId, user);
+
+      // Emit status change event to all clients
+      this.io.emit("user:status_changed", {
+        userId,
+        status,
+      });
 
       this.broadcastUserList();
     }
@@ -89,6 +104,7 @@ class SocketService {
       lastName: user.lastName,
       username: user.username,
       status: user.status,
+      rating: user.rating,
     }));
     this.io.emit("user_list_update", userList);
   }
@@ -106,7 +122,6 @@ class SocketService {
           return next(new Error("Invalid authentication token"));
         }
 
-        // Get user data from database
         const user = await this.userRepository.findOne({
           where: { id: decoded.id },
         });
@@ -130,6 +145,7 @@ class SocketService {
       const username = socket.data.username;
       const firstName = socket.data.firstName;
       const lastName = socket.data.lastName;
+      const rating = socket.data.rating;
 
       // Add to connected users
       this.connectedUsers.set(userId, {
@@ -138,14 +154,15 @@ class SocketService {
         lastName,
         userId,
         username,
-        status: "online",
+        rating,
+        status: UserStatus.ONLINE,
         lastActive: new Date(),
       });
 
-      console.log("@@@ -> connectedUsers", this.connectedUsers.values());
+      console.log("User connected:", username);
 
-      // Update user status in database
-      await this.updateUserStatus(userId, "online");
+      // Update user status in database and broadcast
+      await this.updateUserStatus(userId, UserStatus.ONLINE);
 
       // Send initial data to connected user
       socket.emit("connect_status", {
@@ -154,21 +171,33 @@ class SocketService {
         username,
       });
 
+      // Handle status updates
+      socket.on("user:status_update", ({ status }: { status: UserStatus }) => {
+        this.updateUserStatus(userId, status);
+      });
+
       // Handle heartbeat
       socket.on("heartbeat", () => {
         const user = this.connectedUsers.get(userId);
-        if (user) {
+        if (user && user.status !== UserStatus.INGAME) {
           user.lastActive = new Date();
-          user.status = "online";
           this.connectedUsers.set(userId, user);
-          this.broadcastUserList();
         }
+      });
+
+      // Handle game status
+      socket.on("game:start", () => {
+        this.updateUserStatus(userId, UserStatus.INGAME);
+      });
+
+      socket.on("game:end", () => {
+        this.updateUserStatus(userId, UserStatus.ONLINE);
       });
 
       // Handle disconnect
       socket.on("disconnect", async () => {
         await this.disconnectUser(userId);
-        console.log(`User disconnected: ${userId}`);
+        console.log(`User disconnected: ${username}`);
       });
     });
   }
@@ -180,6 +209,17 @@ class SocketService {
 
   public isUserConnected(userId: string): boolean {
     return this.connectedUsers.has(userId);
+  }
+
+  public getUserStatus(userId: string): UserStatus | null {
+    return this.connectedUsers.get(userId)?.status || null;
+  }
+
+  public updateGameStatus(userId: string, inGame: boolean) {
+    this.updateUserStatus(
+      userId,
+      inGame ? UserStatus.INGAME : UserStatus.ONLINE
+    );
   }
 }
 
