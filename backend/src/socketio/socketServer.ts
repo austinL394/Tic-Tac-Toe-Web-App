@@ -12,7 +12,6 @@ interface ConnectedUser {
   socketId: string;
   userId: string;
   username: string;
-  rating: number;
   status: "online" | "away";
   lastActive: Date;
 }
@@ -93,7 +92,6 @@ class SocketService {
 
   private initialize() {
     this.io.use(async (socket, next) => {
-      console.log("@@@@ new socket got connected");
       try {
         const token = socket.handshake.auth.token;
         if (!token) {
@@ -115,7 +113,7 @@ class SocketService {
         }
 
         socket.data.userId = decoded.id;
-        socket.data.username = decoded.username;
+        socket.data.username = user.name;
         // socket.data.rating = user.rating;
         next();
       } catch (error) {
@@ -124,20 +122,19 @@ class SocketService {
     });
 
     this.io.on("connection", async (socket) => {
-      console.log("@@@@ new socket got connected");
       const userId = socket.data.userId;
       const username = socket.data.username;
-      const rating = socket.data.rating;
 
       // Add to connected users
       this.connectedUsers.set(userId, {
         socketId: socket.id,
         userId,
         username,
-        rating,
         status: "online",
         lastActive: new Date(),
       });
+
+      console.log("@@@ -> connectedUsers", this.connectedUsers.values());
 
       // Update user status in database
       await this.updateUserStatus(userId, "online");

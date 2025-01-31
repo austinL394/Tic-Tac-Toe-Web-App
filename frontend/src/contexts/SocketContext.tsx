@@ -88,6 +88,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Connect when auth state changes
   useEffect(() => {
     if (isAuthenticated) {
+      console.log("@@ try connecting socket.io");
       connect();
     } else {
       disconnect();

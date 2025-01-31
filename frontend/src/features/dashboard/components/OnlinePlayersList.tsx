@@ -14,10 +14,10 @@ interface OnlinePlayersListProps {
 }
 
 export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOpen, onClose }) => {
-  const { onlineUsers, isConnected, sendMessage } = useSocket();
+  const { onlineUsers, isConnected } = useSocket();
 
   const handleChallenge = (playerId: string) => {
-    sendMessage('challenge_request', { challengedUserId: playerId });
+    // sendMessage('challenge_request', { challengedUserId: playerId });
   };
 
   return (
@@ -50,11 +50,10 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOp
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-gray-300">
-                      {player.username.charAt(0)}
+                      {player.username}
                     </div>
                     <div>
                       <p className="text-white">{player.username}</p>
-                      <p className="text-sm text-gray-400">Rating: {player.rating || 1200}</p>
                     </div>
                   </div>
                   <span
@@ -63,7 +62,7 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOp
                 </div>
                 <button
                   className="w-full mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={player.status === 'in-game'}
+                  disabled={player?.status === 'in-game'}
                   onClick={() => handleChallenge(player.userId)}
                 >
                   Challenge
