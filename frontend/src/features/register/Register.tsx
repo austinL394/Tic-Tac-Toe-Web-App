@@ -1,5 +1,3 @@
-// src/components/features/Register/Register.tsx
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import LoginLayout from '@/components/Layout/LoginLayout';
@@ -41,7 +39,6 @@ const Register = () => {
         email: data.email,
         password: data.password,
       });
-      console.log("@@ register response", response);
 
       login(response.user, response.token);
       navigate('/dashboard', { replace: true });

@@ -12,6 +12,7 @@ import Register from './features/register/Register';
 import { Login } from './features/login/Login';
 import Dashboard from './features/dashboard/Dashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { SocketProvider } from './contexts/SocketContext';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -51,10 +52,12 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+    <SocketProvider>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </SocketProvider>
   );
 }
 

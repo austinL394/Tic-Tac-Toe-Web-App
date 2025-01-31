@@ -27,8 +27,8 @@ export const Login = () => {
 
   const onSubmit = async (data: FormInputs) => {
     try {
-      const userData = await authService.login(data);
-      login(userData);
+      const { user, token } = await authService.login(data);
+      login(user, token);
 
       navigate(from, { replace: true });
     } catch (error: any) {

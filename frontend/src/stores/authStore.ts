@@ -5,10 +5,8 @@ interface User {
   id: string;
   username: string;
   email: string;
-  // add other user properties as needed
 }
 
-// Separate interface for the persisted state
 interface PersistedState {
   user: User | null;
   token: string | null;
