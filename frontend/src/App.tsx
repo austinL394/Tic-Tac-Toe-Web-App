@@ -10,6 +10,8 @@ import 'draft-js/dist/Draft.css';
 import AppLayout from 'components/Layout/AppLayout';
 import Register from './features/register/Register';
 import { Login } from './features/login/Login';
+import Dashboard from './features/dashboard/Dashboard';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -29,6 +31,15 @@ const router = createBrowserRouter([
       {
         path: '/register',
         element: <Register />,
+      },
+      {
+        path: '/dashboard',
+        element: (
+          <ProtectedRoute>
+            {' '}
+            <Dashboard />{' '}
+          </ProtectedRoute>
+        ),
       },
       {
         path: '/',

@@ -16,6 +16,7 @@ export const Login = () => {
   const location = useLocation();
   const from = (location.state as any)?.from?.pathname || '/dashboard';
   const isLoading = useAuthStore((state) => state.isLoading);
+  const login = useAuthStore((state) => state.login);
 
   const {
     register,
@@ -26,7 +27,9 @@ export const Login = () => {
 
   const onSubmit = async (data: FormInputs) => {
     try {
-      await authService.login(data);
+      const userData = await authService.login(data);
+      login(userData);
+
       navigate(from, { replace: true });
     } catch (error: any) {
       setError('root', {
@@ -123,20 +126,6 @@ export const Login = () => {
                 )}
               </button>
             </div>
-
-            <div className="flex items-center justify-between text-sm text-white">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                />
-                <span className="ml-2">Remember me</span>
-              </label>
-              <a href="/forgot-password" className="text-blue-400 hover:text-blue-300">
-                Forgot Password?
-              </a>
-            </div>
-
             <div className="text-center text-white text-sm">
               Don't have an account?{' '}
               <a href="/register" className="text-blue-400 hover:text-blue-300">
