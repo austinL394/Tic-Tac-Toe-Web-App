@@ -7,24 +7,24 @@ import * as cache from "memory-cache";
 export class UserController {
   static signup = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { name, email, password, role } = req.body;
-      console.log("step1", { name, email, password, role});
+      const { username, email, password } = req.body;
       const encryptedPassword = await encrypt.encryptpass(password);
       const user = new User();
-      user.name = name;
+      user.name = username;
       user.email = email;
       user.password = encryptedPassword;
-      user.role = role;
-      console.log("step2 new user", user.role);
 
       const userRepository = AppDataSource.getRepository(User);
       await userRepository.save(user);
 
       const token = encrypt.generateToken({ id: user.id });
 
-      res.status(200).json({ message: "User created successfully", token, user });
+      res
+        .status(200)
+        .json({ message: "User created successfully", token, user });
     } catch (error) {
-      res.status(500).json({ message: "Error creating user", error });
+      console.log(error);
+      res.status(500).json({ message: "Error creating user" });
     }
   };
 
@@ -43,7 +43,8 @@ export class UserController {
         res.status(200).json({ data: users });
       }
     } catch (error) {
-      res.status(500).json({ message: "Error fetching users", error });
+      console.log(error);
+      res.status(500).json({ message: "Error fetching users" });
     }
   };
 
@@ -66,7 +67,8 @@ export class UserController {
       await userRepository.save(user);
       res.status(200).json({ message: "updated", user });
     } catch (error) {
-      res.status(500).json({ message: "Error updating user", error });
+      console.log(error);
+      res.status(500).json({ message: "Error updating user" });
     }
   };
 
@@ -86,7 +88,8 @@ export class UserController {
       await userRepository.remove(user);
       res.status(200).json({ message: "ok" });
     } catch (error) {
-      res.status(500).json({ message: "Error deleting user", error });
+      console.log(error);
+      res.status(500).json({ message: "Error deleting user" });
     }
   };
 }

@@ -1,5 +1,4 @@
-import { create } from 'zustand';
-import UserPool from './UserPool';
+import { create } from 'zustand';;
 import { CognitoUser, CognitoUserSession } from 'amazon-cognito-identity-js';
 import axiosClient from '@/utils/axiosClient';
 import { User, UserRole } from '../admin/types';
@@ -34,19 +33,6 @@ export type AuthStore = {
   pdf_token?: string;
 };
 
-// Fetch user session
-const getSession = (user: CognitoUser): Promise<CognitoUserSession | null> => {
-  return new Promise((resolve, reject) => {
-    user.getSession((err: Error | null, session: CognitoUserSession | null) => {
-      if (err || !session) {
-        reject(err || new Error('No session found'));
-      } else {
-        resolve(session);
-      }
-    });
-  });
-};
-
 const getUser = async (token: string) => {
   const result = await axiosClient.get<{ result: User }>(`/user`, {
     headers: {
@@ -55,28 +41,6 @@ const getUser = async (token: string) => {
   });
 
   return result.data.result;
-};
-
-const getToken = async () => {
-  if (pdf_token) {
-    return pdf_token;
-  }
-
-  const user = UserPool.getCurrentUser();
-  if (!user) {
-    throw new Error('No user found');
-  }
-
-  const session = await getSession(user);
-  if (!session) {
-    throw new Error('No session found');
-  }
-
-  if (!session.isValid()) {
-    throw new Error('Session is invalid');
-  }
-
-  return session.getAccessToken().getJwtToken();
 };
 
 export const useAuth = create<AuthStore>((set, get) => {
@@ -111,18 +75,7 @@ export const useAuth = create<AuthStore>((set, get) => {
       },
 
       logout: () => {
-        const user = UserPool.getCurrentUser();
-        user?.signOut();
         localStorage.clear();
-        set({ state: 'logged-out', userInfo: null });
-      },
-
-      getToken: async () => {
-        const token = await getToken();
-        if (get().state !== 'logged-in' || !token) {
-          throw new Error('User is not logged in');
-        }
-        return token;
       },
     },
   };

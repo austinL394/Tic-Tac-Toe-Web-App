@@ -6,7 +6,7 @@ import * as dotenv from "dotenv";
 import { payload } from "../dto/user.dto";
 
 dotenv.config();
-const { JWT_SECRET = "" } = process.env;
+const { JWT_SECRET = "password_secret" } = process.env;
 
 export class encrypt {
   static async encryptpass(password: string): Promise<string> {

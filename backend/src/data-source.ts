@@ -17,7 +17,7 @@ export const AppDataSource = new DataSource({
   password: DB_PASSWORD || "postgres",
   database: DB_DATABASE || "postgres",
 
-  synchronize: NODE_ENV === "dev" ? false : false,
+  synchronize: true,
 //logging logs sql command on the treminal
   logging: NODE_ENV === "dev" ? false : false,
   entities: [User],

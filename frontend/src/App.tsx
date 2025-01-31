@@ -8,7 +8,8 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import './App.css';
 import 'draft-js/dist/Draft.css';
 import AppLayout from 'components/Layout/AppLayout';
-import AuthGuard from './features/login/AuthGuard';
+import Register from './features/register/Register';
+import { Login } from './features/login/Login';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -18,12 +19,20 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       {
-        path: '/',
-        loader: () => redirect('/reports'),
-      },
-      {
         path: '/reports',
         element: <div />,
+      },
+      {
+        path: '/login',
+        element: <Login />,
+      },
+      {
+        path: '/register',
+        element: <Register />,
+      },
+      {
+        path: '/',
+        loader: () => redirect('/reports'),
       },
     ],
   },
@@ -32,9 +41,7 @@ const router = createBrowserRouter([
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthGuard>
-        <RouterProvider router={router} />
-      </AuthGuard>
+      <RouterProvider router={router} />
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );

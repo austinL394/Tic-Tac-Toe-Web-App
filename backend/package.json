@@ -29,6 +29,8 @@
     "build": "tsc",
     "start": "ts-node src/index.ts",
     "typeorm": "typeorm-ts-node-commonjs",
-    "migration": "npm run typeorm migration:run -- -d ./src/data-source.ts"
+    "migration:run": "npm run typeorm migration:run -- -d ./src/data-source.ts",
+    "migration:create": "npm run typeorm migration:create -- -d ./src/data-source.ts",
+    "migration:revert": "npm run typeorm migration:revert -- -d ./src/data-source.ts"
   }
 }

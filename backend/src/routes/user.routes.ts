@@ -15,7 +15,7 @@ Router.get(
   authentification,
   AuthController.getProfile
 );
-Router.post("/signup", UserController.signup);
+Router.post("/register", UserController.signup);
 Router.post("/login", AuthController.login);
 Router.put(
   "/update/:id",
