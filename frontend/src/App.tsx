@@ -7,24 +7,20 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import './App.css';
 import 'draft-js/dist/Draft.css';
-import AppLayout from 'components/Layout/AppLayout';
 import Register from './features/register/Register';
 import { Login } from './features/login/Login';
 import Dashboard from './features/dashboard/Dashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { SocketProvider } from './contexts/SocketContext';
+import MainLayout from './components/Layout/MainLayout';
 
 // Create a client
 const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
   {
-    element: <AppLayout />,
+    // element: <AppLayout />,
     children: [
-      {
-        path: '/reports',
-        element: <div />,
-      },
       {
         path: '/login',
         element: <Login />,
@@ -44,7 +40,7 @@ const router = createBrowserRouter([
       },
       {
         path: '/',
-        loader: () => redirect('/reports'),
+        loader: () => redirect('/dashboard'),
       },
     ],
   },
@@ -53,10 +49,12 @@ const router = createBrowserRouter([
 function App() {
   return (
     <SocketProvider>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
+      <MainLayout>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
+      </MainLayout>
     </SocketProvider>
   );
 }

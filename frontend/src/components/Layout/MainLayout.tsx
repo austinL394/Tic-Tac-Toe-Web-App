@@ -1,14 +1,13 @@
 import * as React from 'react';
-import { Header } from '../Header';
+import Header from './Header';
 
-export const MainLayout = ({ children }: React.PropsWithChildren) => {
+const MainLayout = ({ children }: React.PropsWithChildren) => {
   return (
-    <>
-      <Header>
-      </Header>
-      {/* Tool Bar */}
-      <div className="w-full h-full overflow-hidden">{children}</div>
-      {/* Main Body */}
-    </>
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-black font-sans">
+      <Header />
+      <div className="w-full pt-5">{children}</div>
+    </div>
   );
 };
+
+export default MainLayout;

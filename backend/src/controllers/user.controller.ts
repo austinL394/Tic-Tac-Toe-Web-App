@@ -7,10 +7,12 @@ import * as cache from "memory-cache";
 export class UserController {
   static signup = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { username, email, password } = req.body;
+      const { firstName, lastName, username, email, password } = req.body;
       const encryptedPassword = await encrypt.encryptpass(password);
       const user = new User();
-      user.name = username;
+      user.firstName = firstName;
+      user.lastName = lastName;
+      user.username = username;
       user.email = email;
       user.password = encryptedPassword;
 
@@ -62,7 +64,7 @@ export class UserController {
         return;
       }
 
-      user.name = name;
+      user.username = name;
       user.email = email;
       await userRepository.save(user);
       res.status(200).json({ message: "updated", user });

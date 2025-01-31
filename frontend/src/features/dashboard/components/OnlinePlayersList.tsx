@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSocket } from '@/hooks/useSocket';
+import { useAuthStore } from '@/stores/authStore';
 
 interface OnlinePlayer {
   id: string;
@@ -15,6 +16,7 @@ interface OnlinePlayersListProps {
 
 export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOpen, onClose }) => {
   const { onlineUsers, isConnected } = useSocket();
+  const authUser = useAuthStore((store) => store.user);
 
   const handleChallenge = (playerId: string) => {
     // sendMessage('challenge_request', { challengedUserId: playerId });
@@ -50,23 +52,25 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOp
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-gray-300">
-                      {player.username}
+                      {player.firstName.charAt(0)}
                     </div>
                     <div>
-                      <p className="text-white">{player.username}</p>
+                      <p className="text-white">{player.userId === authUser!.id ? 'You' : player.username}</p>
                     </div>
                   </div>
                   <span
-                    className={`w-2 h-2 rounded-full ${player.status === 'online' ? 'bg-green-500' : 'bg-yellow-500'}`}
+                    className={`w-2 h-2 rounded-[50%] ${player.status === 'online' ? 'bg-green-500' : 'bg-yellow-500'}`}
                   />
                 </div>
-                <button
-                  className="w-full mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={player?.status === 'in-game'}
-                  onClick={() => handleChallenge(player.userId)}
-                >
-                  Challenge
-                </button>
+                {player.userId !== authUser!.id && (
+                  <button
+                    className="w-full mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={player?.status === 'in-game'}
+                    onClick={() => handleChallenge(player.userId)}
+                  >
+                    Challenge
+                  </button>
+                )}
               </div>
             ))}
           </div>

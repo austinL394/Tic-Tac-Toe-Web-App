@@ -11,7 +11,7 @@ const Header = () => {
               </div>
             </div>
             <div className="hidden md:block">
-              <div className="ml-4 text-xl font-semibold text-white">Account Portal</div>
+              <div className="ml-4 text-xl font-semibold text-white">Tic-Tac-Toe</div>
             </div>
           </div>
         </div>

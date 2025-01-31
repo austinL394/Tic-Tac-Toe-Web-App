@@ -10,9 +10,15 @@ import {
 export class User {
   @PrimaryGeneratedColumn("uuid")
   id: string;
+  
+  @Column({ nullable: false })
+  firstName: string;
 
   @Column({ nullable: false })
-  name: string;
+  lastName: string;
+
+  @Column({ nullable: false })
+  username: string;
 
   @Column({ nullable: false, unique: true })
   email: string;

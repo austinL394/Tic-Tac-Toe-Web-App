@@ -11,6 +11,8 @@ const { JWT_SECRET = "password_secret" } = process.env;
 interface ConnectedUser {
   socketId: string;
   userId: string;
+  firstName: string;
+  lastName: string;
   username: string;
   status: "online" | "away";
   lastActive: Date;
@@ -83,8 +85,9 @@ class SocketService {
   private broadcastUserList() {
     const userList = Array.from(this.connectedUsers.values()).map((user) => ({
       userId: user.userId,
+      firstName: user.firstName,
+      lastName: user.lastName,
       username: user.username,
-      rating: user.rating,
       status: user.status,
     }));
     this.io.emit("user_list_update", userList);
@@ -113,8 +116,9 @@ class SocketService {
         }
 
         socket.data.userId = decoded.id;
-        socket.data.username = user.name;
-        // socket.data.rating = user.rating;
+        socket.data.username = user.username;
+        socket.data.firstName = user.firstName;
+        socket.data.lastName = user.lastName;
         next();
       } catch (error) {
         next(new Error("Authentication failed"));
@@ -124,10 +128,14 @@ class SocketService {
     this.io.on("connection", async (socket) => {
       const userId = socket.data.userId;
       const username = socket.data.username;
+      const firstName = socket.data.firstName;
+      const lastName = socket.data.lastName;
 
       // Add to connected users
       this.connectedUsers.set(userId, {
         socketId: socket.id,
+        firstName,
+        lastName,
         userId,
         username,
         status: "online",

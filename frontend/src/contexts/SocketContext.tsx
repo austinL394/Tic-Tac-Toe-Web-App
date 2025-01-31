@@ -13,8 +13,10 @@ interface SocketContextType {
 interface OnlineUser {
   userId: string;
   username: string;
+  firstName: string;
+  lastName: string;
   rating: number;
-  status: 'online' | 'away';
+  status: 'online' | 'away' | 'in-game';
 }
 
 export const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -88,7 +90,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Connect when auth state changes
   useEffect(() => {
     if (isAuthenticated) {
-      console.log("@@ try connecting socket.io");
+      console.log('@@ try connecting socket.io');
       connect();
     } else {
       disconnect();
