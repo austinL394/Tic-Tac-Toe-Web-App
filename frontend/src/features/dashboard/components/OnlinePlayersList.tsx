@@ -4,6 +4,8 @@ import { UserStatus } from '@/types';
 import StatusIndicator from './StatusIndicator';
 import { useSocket } from '@/hooks/useSocket';
 import { useAuthStore } from '@/stores/authStore';
+import CloseIcon from '@/components/Icons/CloseIcon';
+import ArrwDown from '@/components/Icons/ArrowDownIcon';
 interface OnlinePlayersListProps {
   isDrawerOpen: boolean;
   onClose: () => void;
@@ -38,9 +40,7 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOp
       >
         {/* Close Button */}
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <CloseIcon />
         </button>
 
         <div className="p-6">
@@ -70,15 +70,9 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOp
                     <StatusIndicator status={currentStatus} />
                     <span>Set Status</span>
                   </div>
-                  <svg
+                  <ArrwDown
                     className={`w-4 h-4 transition-transform duration-200 ${isStatusDropdownOpen ? 'rotate-180' : ''}`}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
+                  />
                 </button>
 
                 {isStatusDropdownOpen && (

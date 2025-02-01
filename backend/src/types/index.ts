@@ -22,6 +22,8 @@ export interface GameRoom {
     [userId: string]: {
       symbol: "X" | "O";
       username: string;
+      firstName: string;
+      lastName: string;
       ready: boolean;
     };
   };

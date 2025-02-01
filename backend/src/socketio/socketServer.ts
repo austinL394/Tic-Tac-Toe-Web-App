@@ -5,6 +5,7 @@ import { UserService } from "./services/userService";
 
 import * as dotenv from "dotenv";
 import { SharedStore } from "./store/sharedStore";
+import { GameService } from "./services/gameService";
 
 dotenv.config();
 const { JWT_SECRET = "password_secret" } = process.env;
@@ -19,6 +20,7 @@ export class SocketServer {
   private io: SocketIOServer;
   private store: SharedStore;
   private userService: UserService;
+  private gameService: GameService;
   private authMiddleware: AuthMiddleware;
 
   constructor(io: SocketIOServer) {
@@ -26,6 +28,7 @@ export class SocketServer {
     this.store = SharedStore.getInstance();
     this.authMiddleware = new AuthMiddleware(JWT_SECRET);
     this.userService = new UserService(io);
+    this.gameService = new GameService(io);
     this.initialize();
   }
 
@@ -37,6 +40,7 @@ export class SocketServer {
     this.io.on("connection", async (socket) => {
       await this.userService.handleConnection(socket);
       this.userService.setupEvents(socket);
+      this.gameService.setupEvents(socket);
     });
   }
 

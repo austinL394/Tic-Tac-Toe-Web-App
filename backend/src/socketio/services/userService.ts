@@ -1,26 +1,26 @@
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { BaseService } from "./baseService";
 
-import { AppDataSource } from "../../data-source";
-
-import { User } from "../../entity/User";
 import { SharedStore } from "../store/sharedStore";
 
 import { UserStatus } from "../../types";
+import { ServiceRegistry } from "../serviceRegistry";
+import { GameService } from "./gameService";
 
 export class UserService extends BaseService {
   private readonly sessionTimeout: number = 1000 * 60 * 30;
   private readonly autoAwayTimeout: number = 1000 * 60 * 5;
-  private userRepository = AppDataSource.getRepository(User);
-  F;
+  private gameService: GameService;
 
   constructor(io: SocketIOServer) {
-    super(io);
+    super(io, "userService");
     this.store = SharedStore.getInstance();
     this.startSessionMonitoring();
   }
 
   setupEvents(socket: Socket) {
+    this.gameService =
+      ServiceRegistry.getInstance().get<GameService>("gameService");
     const userId = socket.data.userId;
 
     socket.on("user:status_update", ({ status }: { status: UserStatus }) => {

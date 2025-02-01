@@ -1,6 +1,7 @@
 import { useAuthStore } from '@/stores/authStore';
-import { UserStatus } from '@/types';
-import React, { createContext, useEffect, useRef } from 'react';
+import { GameRoom, UserStatus } from '@/types';
+import React, { createContext, useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 
 interface SocketContextType {
@@ -8,9 +9,15 @@ interface SocketContextType {
   isConnected: boolean;
   onlineUsers: OnlineUser[];
   currentSession: UserSession | null;
+  rooms: GameRoom;
   connect: () => void;
   disconnect: () => void;
   updateUserStatus: (status: UserStatus) => void;
+
+  createRoom: () => void;
+  joinRoom: (roomId: string) => void;
+  leaveRoom: (roomId: string) => void;
+  toggleReady: (roomId: string) => void;
 }
 
 interface OnlineUser {
@@ -30,31 +37,34 @@ interface UserSession {
 export const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const navigate = useNavigate();
   const socketRef = useRef<Socket | null>(null);
-  const [isConnected, setIsConnected] = React.useState(false);
-  const [onlineUsers, setOnlineUsers] = React.useState<OnlineUser[]>([]);
-  const [currentSession, setCurrentSession] = React.useState<UserSession | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const [currentSession, setCurrentSession] = useState<UserSession | null>(null);
+  // Game-related state
+  const [rooms, setRooms] = useState<GameRoom[]>([]);
+  const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
+  const [gameError, setGameError] = useState<string | null>(null);
 
   const isAuthenticated = useAuthStore((store) => store.isAuthenticated);
   const token = useAuthStore((store) => store.token);
   const user = useAuthStore((store) => store.user);
 
-  const updateUserStatus = React.useCallback((status: UserStatus) => {
+  // User methods
+  const updateUserStatus = useCallback((status: UserStatus) => {
     if (!socketRef.current?.connected) return;
 
     socketRef.current.emit('user:status_update', { status });
-
-    // Update local session state
     setCurrentSession((prev) => (prev ? { ...prev, status, lastActivity: new Date() } : null));
   }, []);
 
-  const handleUserStatusUpdate = React.useCallback(
+  const handleUserStatusUpdate = useCallback(
     (data: { userId: string; status: UserStatus }) => {
       setOnlineUsers((prevUsers) =>
         prevUsers.map((user) => (user.userId === data.userId ? { ...user, status: data.status } : user)),
       );
 
-      // Update current session if it's the current user
       if (data.userId === user?.id) {
         setCurrentSession((prev) => (prev ? { ...prev, status: data.status, lastActivity: new Date() } : null));
       }
@@ -62,7 +72,45 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     [user?.id],
   );
 
-  const connect = React.useCallback(() => {
+  // Game methods
+  const createRoom = useCallback(() => {
+    if (!socketRef.current?.connected) return;
+    socketRef.current.emit('game:create_room');
+  }, []);
+
+  const joinRoom = useCallback(
+    (roomId: string) => {
+      if (!socketRef.current?.connected) return;
+      socketRef.current.emit('game:join_room', roomId);
+      navigate(`/game/${roomId}`);
+    },
+    [navigate],
+  );
+
+  const leaveRoom = useCallback(
+    (roomId: string) => {
+      if (!socketRef.current?.connected) return;
+      socketRef.current.emit('game:leave_room', roomId);
+      setCurrentRoom(null);
+      navigate('/');
+    },
+    [navigate],
+  );
+
+  const toggleReady = useCallback((roomId: string) => {
+    if (!socketRef.current?.connected) return;
+    socketRef.current.emit('game:toggle_ready', roomId);
+  }, []);
+
+  const makeMove = useCallback(
+    (position: number) => {
+      if (!socketRef.current?.connected || !currentRoom) return;
+      socketRef.current.emit('game:make_move', { roomId: currentRoom.id, position });
+    },
+    [currentRoom],
+  );
+
+  const connect = useCallback(() => {
     if (socketRef.current?.connected || !isAuthenticated || !token || !user) return;
 
     const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -79,68 +127,97 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     socket.on('connect', () => {
       console.log('Socket connected');
       setIsConnected(true);
-
-      // Initialize current session
       setCurrentSession({
         userId: user.id,
         status: UserStatus.ONLINE,
         lastActivity: new Date(),
       });
 
-      // Start heartbeat
       const heartbeatInterval = setInterval(() => {
         socket.emit('heartbeat');
       }, 5000);
 
-      // Clean up heartbeat on disconnect
       socket.on('disconnect', () => {
         clearInterval(heartbeatInterval);
       });
     });
 
+    // User events
     socket.on('user_list_update', (users: OnlineUser[]) => {
       setOnlineUsers(users);
     });
 
     socket.on('user:status_changed', handleUserStatusUpdate);
 
+    // Game events
+    socket.on('game:room_list', (updatedRooms: GameRoom[]) => {
+      console.log('@ got updated rooms', updatedRooms);
+      setRooms(updatedRooms);
+    });
+
+    socket.on('game:room_created', (room: GameRoom) => {
+      setCurrentRoom(room);
+      navigate(`/game/${room.id}`);
+    });
+
+    socket.on('game:room_state', (room: GameRoom) => {
+      setCurrentRoom(room);
+      setRooms((prevRooms) => prevRooms.map((r) => (r.id === room.id ? room : r)));
+    });
+
+    socket.on('game:error', (errorMessage: string) => {
+      setGameError(errorMessage);
+    });
+
+    socket.on('game:room_closed', () => {
+      setCurrentRoom(null);
+      navigate('/');
+    });
+
     socket.on('disconnect', () => {
       console.log('Socket disconnected');
       setIsConnected(false);
       setCurrentSession(null);
+      setRooms([]);
+      setCurrentRoom(null);
+      setGameError(null);
     });
 
     socket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
       setIsConnected(false);
       setCurrentSession(null);
+      setGameError('Connection error');
     });
 
-    // Auto-away detection
     const autoAwayTimeout = setTimeout(() => {
       if (currentSession?.status === 'online') {
-        updateUserStatus('away');
+        updateUserStatus(UserStatus.BUSY);
       }
-    }, 300000); // 5 minutes
+    }, 300000);
+
+    console.log('@@@ rooms', rooms);
 
     return () => {
       clearTimeout(autoAwayTimeout);
     };
-  }, [isAuthenticated, token, user, handleUserStatusUpdate, updateUserStatus]);
+  }, [isAuthenticated, token, user, handleUserStatusUpdate, updateUserStatus, navigate]);
 
-  const disconnect = React.useCallback(() => {
+  const disconnect = useCallback(() => {
     if (socketRef.current) {
       socketRef.current.disconnect();
       socketRef.current = null;
       setIsConnected(false);
       setOnlineUsers([]);
       setCurrentSession(null);
+      setRooms([]);
+      setCurrentRoom(null);
+      setGameError(null);
     }
   }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('@@ try connecting socket.io');
       connect();
     } else {
       disconnect();
@@ -156,9 +233,20 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     isConnected,
     onlineUsers,
     currentSession,
+    // Game state
+    rooms,
+    currentRoom,
+    gameError,
+    // Methods
     connect,
     disconnect,
     updateUserStatus,
+    // Game methods
+    createRoom,
+    joinRoom,
+    leaveRoom,
+    toggleReady,
+    makeMove,
   };
 
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;

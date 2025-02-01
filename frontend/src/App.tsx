@@ -11,16 +11,38 @@ import Register from './features/register/Register';
 import { Login } from './features/login/Login';
 import Dashboard from './features/dashboard/Dashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import GameBoard from './features/gameboard/GameBoard';
+import GameRoom from './features/gameboard/GameBoard';
+
+// RootLayout.tsx
+import { Outlet } from 'react-router-dom';
 import { SocketProvider } from './contexts/SocketContext';
 import MainLayout from './components/Layout/MainLayout';
-import GameBoard from './features/gameboard/GameBoard';
 
 // Create a client
 const queryClient = new QueryClient();
 
+interface RootLayoutProps {
+  queryClient: QueryClient;
+}
+
+export function RootLayout({ queryClient }: RootLayoutProps) {
+  return (
+    <SocketProvider>
+      <MainLayout>
+        <QueryClientProvider client={queryClient}>
+          <Outlet />
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
+      </MainLayout>
+    </SocketProvider>
+  );
+}
+
+// App.tsx
 const router = createBrowserRouter([
   {
-    // element: <AppLayout />,
+    element: <RootLayout queryClient={queryClient} />,
     children: [
       {
         path: '/login',
@@ -39,6 +61,10 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: '/game/:roomId',
+        element: <GameRoom />,
+      },
+      {
         path: '/gameboard',
         element: (
           <ProtectedRoute>
@@ -55,16 +81,7 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  return (
-    <SocketProvider>
-      <MainLayout>
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-          <ReactQueryDevtools initialIsOpen={false} />
-        </QueryClientProvider>
-      </MainLayout>
-    </SocketProvider>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;
