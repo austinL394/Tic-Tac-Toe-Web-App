@@ -18,7 +18,6 @@ interface OnlineUser {
   username: string;
   firstName: string;
   lastName: string;
-  rating: number;
   status: UserStatus;
 }
 
