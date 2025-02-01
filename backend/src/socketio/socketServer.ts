@@ -8,8 +8,6 @@ import { UserStatus } from "../types";
 dotenv.config();
 const { JWT_SECRET = "password_secret" } = process.env;
 
-type UserStatus = "online" | "away" | "in-game";
-
 interface ConnectedUser {
   socketId: string;
   userId: string;
@@ -58,9 +56,9 @@ class SocketService {
           this.disconnectUser(userId);
         } else if (
           timeDiff > this.autoAwayTimeout &&
-          user.status === "online"
+          user.status === UserStatus.ONLINE
         ) {
-          this.updateUserStatus(userId, "away");
+          this.updateUserStatus(userId, UserStatus.BUSY);
         }
       });
     }, 30000); // Check every 30 seconds

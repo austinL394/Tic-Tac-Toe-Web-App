@@ -5,7 +5,6 @@ import { Request, Response } from "express";
 import { userRouter } from "./routes/user.routes";
 import { errorHandler } from "./middleware/error-middleware";
 import "reflect-metadata";
-import { createServer, Server as HTTPServer } from "http";
 import { Server } from "socket.io";
 import SocketService from "./socketio/socketServer";
 
@@ -28,6 +27,7 @@ AppDataSource.initialize()
         allowedHeaders: ["Authorization", "Content-Type"],
       },
     });
+
     const socketServer = new SocketService(io);
 
     http.listen(PORT, () => {

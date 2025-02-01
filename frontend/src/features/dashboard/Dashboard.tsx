@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { OnlinePlayersList } from './components/OnlinePlayersList';
-
 const activeGames = [
   { id: 1, player1: 'Player2', player2: 'Player5', status: 'in-progress' },
   { id: 2, player1: 'Player6', player2: 'Player7', status: 'in-progress' },
@@ -8,34 +7,16 @@ const activeGames = [
   { id: 4, player1: 'Player10', player2: 'Player11', status: 'in-progress' },
 ];
 
+// Dashboard component
 const Dashboard = () => {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(window.innerWidth >= 1024);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setIsDrawerOpen(true);
-      } else {
-        setIsDrawerOpen(false);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-black font-sans">
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
+      <div className={`container mx-auto px-4 py-8 transition-all duration-300 ${isDrawerOpen ? 'pr-80' : ''}`}>
+        <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">Game Rooms</h1>
-          <button
-            onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-            className="lg:hidden px-4 py-2 bg-blue-600 text-white rounded-lg"
-          >
-            {isDrawerOpen ? 'Hide Players' : 'Show Players'}
-          </button>
         </div>
 
         {/* Quick Play Button */}
@@ -75,6 +56,16 @@ const Dashboard = () => {
           ))}
         </div>
       </div>
+
+      {/* Toggle Button */}
+      <button
+        onClick={() => setIsDrawerOpen(true)}
+        className="text-white fixed right-0 top-1/2 -translate-y-1/2 bg-gray-800 p-2 rounded-l-lg shadow-lg hover:bg-gray-700 transition-colors z-50"
+      >
+        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
 
       {/* Online Players List Component */}
       <OnlinePlayersList isDrawerOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
