@@ -4,6 +4,7 @@ import { AuthMiddleware } from "./middleware/authMiddleware";
 import { UserService } from "./services/userService";
 
 import * as dotenv from "dotenv";
+import { SharedStore } from "./store/sharedStore";
 
 dotenv.config();
 const { JWT_SECRET = "password_secret" } = process.env;
@@ -16,41 +17,39 @@ export interface TokenPayload {
 
 export class SocketServer {
   private io: SocketIOServer;
-  private connectedUsers: Map<string, ConnectedUser> = new Map();
+  private store: SharedStore;
   private userService: UserService;
   private authMiddleware: AuthMiddleware;
 
   constructor(io: SocketIOServer) {
     this.io = io;
+    this.store = SharedStore.getInstance();
     this.authMiddleware = new AuthMiddleware(JWT_SECRET);
-    this.userService = new UserService(io, this.connectedUsers);
+    this.userService = new UserService(io);
     this.initialize();
   }
 
   private initialize() {
-    // Setup authentication middleware
     this.io.use((socket, next) =>
       this.authMiddleware.authenticate(socket, next)
     );
 
-    // Handle connections
     this.io.on("connection", async (socket) => {
       await this.userService.handleConnection(socket);
       this.userService.setupEvents(socket);
     });
   }
 
-  // Public methods
   public getConnectedUsers(): ConnectedUser[] {
-    return Array.from(this.connectedUsers.values());
+    return this.store.getAllUsers();
   }
 
   public isUserConnected(userId: string): boolean {
-    return this.connectedUsers.has(userId);
+    return this.store.isUserConnected(userId);
   }
 
   public getUserStatus(userId: string): UserStatus | null {
-    return this.connectedUsers.get(userId)?.status || null;
+    return this.store.getUserStatus(userId);
   }
 
   public updateGameStatus(userId: string, inGame: boolean) {

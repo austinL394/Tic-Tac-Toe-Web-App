@@ -1,0 +1,46 @@
+import { ConnectedUser, Room, UserStatus } from "../../types";
+
+export class SharedStore {
+  private static instance: SharedStore;
+  private users: Map<string, ConnectedUser> = new Map();
+
+  private constructor() {}
+
+  static getInstance(): SharedStore {
+    if (!SharedStore.instance) {
+      SharedStore.instance = new SharedStore();
+    }
+    return SharedStore.instance;
+  }
+  
+  addUser(user: ConnectedUser): void {
+    this.users.set(user.userId, user);
+  }
+
+  getUser(userId: string): ConnectedUser | undefined {
+    return this.users.get(userId);
+  }
+
+  updateUser(userId: string, updates: Partial<ConnectedUser>): void {
+    const user = this.users.get(userId);
+    if (user) {
+      this.users.set(userId, { ...user, ...updates });
+    }
+  }
+
+  removeUser(userId: string): void {
+    this.users.delete(userId);
+  }
+
+  getAllUsers(): ConnectedUser[] {
+    return Array.from(this.users.values());
+  }
+
+  isUserConnected(userId: string): boolean {
+    return this.users.has(userId);
+  }
+
+  getUserStatus(userId: string): UserStatus | null {
+    return this.users.get(userId)?.status || null;
+  }
+}

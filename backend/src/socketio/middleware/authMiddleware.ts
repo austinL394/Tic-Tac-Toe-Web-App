@@ -1,3 +1,10 @@
+import * as jwt from "jsonwebtoken";
+import { Socket } from "socket.io";
+
+import { AppDataSource } from "../../data-source";
+import { User } from "../../entity/User";
+import { TokenPayload } from "../socketServer";
+
 export class AuthMiddleware {
   private userRepository = AppDataSource.getRepository(User);
 
