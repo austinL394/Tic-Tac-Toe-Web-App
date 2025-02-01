@@ -15,16 +15,18 @@ export interface ConnectedUser {
   roomId?: string;
 }
 
-export interface Room {
+export interface GameRoom {
   id: string;
+  hostId: string;
   players: {
-    [key: string]: {
-      userId: string;
+    [userId: string]: {
       symbol: "X" | "O";
+      username: string;
+      ready: boolean;
     };
   };
-  board: Array<string | null>;
-  currentTurn?: string; // userId of current player
   status: "waiting" | "playing" | "finished";
+  board: Array<string | null>;
+  currentTurn?: string;
   winner?: string;
 }

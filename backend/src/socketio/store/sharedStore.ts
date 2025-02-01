@@ -1,8 +1,9 @@
-import { ConnectedUser, Room, UserStatus } from "../../types";
+import { ConnectedUser, GameRoom, UserStatus } from "../../types";
 
 export class SharedStore {
   private static instance: SharedStore;
   private users: Map<string, ConnectedUser> = new Map();
+  private games: Map<string, GameRoom> = new Map();
 
   private constructor() {}
 
@@ -12,7 +13,7 @@ export class SharedStore {
     }
     return SharedStore.instance;
   }
-  
+
   addUser(user: ConnectedUser): void {
     this.users.set(user.userId, user);
   }
@@ -42,5 +43,21 @@ export class SharedStore {
 
   getUserStatus(userId: string): UserStatus | null {
     return this.users.get(userId)?.status || null;
+  }
+
+  setGameRoom(roomId: string, gameRoom: GameRoom) {
+    this.games.set(roomId, gameRoom);
+  }
+
+  getGameRoom(roomId: string): GameRoom | undefined {
+    return this.games.get(roomId);
+  }
+
+  removeGameRoom(roomId: string) {
+    this.games.delete(roomId);
+  }
+
+  getAllGameRooms(): GameRoom[] {
+    return Array.from(this.games.values());
   }
 }

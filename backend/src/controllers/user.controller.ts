@@ -30,26 +30,6 @@ export class UserController {
     }
   };
 
-  static getUsers = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const data = cache.get("data");
-      if (data) {
-        console.log("serving from cache");
-        res.status(200).json({ data });
-      } else {
-        console.log("serving from db");
-        const userRepository = AppDataSource.getRepository(User);
-        const users = await userRepository.find();
-
-        cache.put("data", users, 6000);
-        res.status(200).json({ data: users });
-      }
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error fetching users" });
-    }
-  };
-
   static updateUser = async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
