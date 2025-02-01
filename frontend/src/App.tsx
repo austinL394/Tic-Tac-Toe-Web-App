@@ -13,6 +13,7 @@ import Dashboard from './features/dashboard/Dashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { SocketProvider } from './contexts/SocketContext';
 import MainLayout from './components/Layout/MainLayout';
+import GameBoard from './features/gameboard/GameBoard';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -33,8 +34,15 @@ const router = createBrowserRouter([
         path: '/dashboard',
         element: (
           <ProtectedRoute>
-            {' '}
-            <Dashboard />{' '}
+            <Dashboard />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/gameboard',
+        element: (
+          <ProtectedRoute>
+            <GameBoard />
           </ProtectedRoute>
         ),
       },
