@@ -21,7 +21,7 @@ export class GameService extends BaseService {
       this.handleJoinRoom(socket, userId, roomId);
     });
 
-    socket.on("game:leave_room", (roomId: string) => {
+    socket.on("game:room_leave", (roomId: string) => {
       this.handleLeaveRoom(socket, userId, roomId);
     });
 
@@ -220,6 +220,7 @@ export class GameService extends BaseService {
         this.store.setGameRoom(roomId, gameRoom);
         this.io.to(roomId).emit("game:room_state", gameRoom);
       }
+      socket.emit("game:room_left");
 
       // Broadcast updated room list
       this.broadcastRoomList();
