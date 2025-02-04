@@ -12,10 +12,8 @@ declare module '*.svg?react' {
 }
 /// <reference types="vite/client" />
 
-/// <reference types="vite/client" />
-
 interface ImportMetaEnv {
-  // more env variables...
+  VITE_API_URL: string;
 }
 
 interface ImportMeta {

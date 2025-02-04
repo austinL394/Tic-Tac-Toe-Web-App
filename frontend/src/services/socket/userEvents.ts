@@ -1,4 +1,3 @@
-// src/socket/userEvents.ts
 import { Socket } from 'socket.io-client';
 import { OnlineUser, UserEventHandlers } from '@/types/socket';
 import { UserStatus } from '@/types';

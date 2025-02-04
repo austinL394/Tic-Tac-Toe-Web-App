@@ -42,4 +42,5 @@ export class SocketService {
 
   makeMove(roomId: string, position: number) {
     this.socket.emit('game:make_move', { roomId, position });
+  }
 }

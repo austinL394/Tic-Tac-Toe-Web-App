@@ -1,4 +1,3 @@
-// src/socket/gameEvents.ts
 import { Socket } from 'socket.io-client';
 import { GameRoom } from '@/types';
 import { SocketEventHandlers } from '@/types/socket';
