@@ -1,7 +1,5 @@
-// src/socket/userEvents.ts
 import { Socket } from 'socket.io-client';
-import { OnlineUser, UserEventHandlers } from '@/types/socket';
-import { UserStatus } from '@/types';
+import { OnlineUser, UserEventHandlers, UserStatus } from '@/types';
 
 export const setupUserEvents = (socket: Socket, { setOnlineUsers, setCurrentSession, user }: UserEventHandlers) => {
   socket.on('user_list_update', (users: OnlineUser[]) => {

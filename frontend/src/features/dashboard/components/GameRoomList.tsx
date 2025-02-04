@@ -1,96 +1,13 @@
+import classNames from 'classnames';
+
 import JoinIcon from '@/components/Icons/JoinIcon';
 import { GameRoom } from '@/types';
-import classNames from 'classnames';
 
 interface GameRoomListProps {
   rooms: GameRoom[];
   onJoinRoom?: (roomId: string) => void;
   currentUserId?: string;
 }
-
-export const mockRooms: GameRoom[] = [
-  {
-    // Room waiting for players
-    id: 'room_1234abcd',
-    hostId: 'user_1',
-    players: {
-      user_1: {
-        symbol: 'X',
-        username: 'John Doe',
-        ready: true,
-      },
-    },
-    status: 'waiting',
-    board: Array(9).fill(null),
-  },
-  {
-    // Full room in play
-    id: 'room_5678efgh',
-    hostId: 'user_3',
-    players: {
-      user_3: {
-        symbol: 'X',
-        username: 'Alice Smith',
-        ready: true,
-      },
-      user_4: {
-        symbol: 'O',
-        username: 'Bob Johnson',
-        ready: true,
-      },
-    },
-    status: 'playing',
-    currentTurn: 'user_3',
-    board: ['X', null, 'O', null, 'X', null, 'O', null, null],
-  },
-  {
-    // Finished game
-    id: 'room_9012ijkl',
-    hostId: 'user_5',
-    players: {
-      user_5: {
-        symbol: 'X',
-        username: 'Emma Davis',
-        ready: true,
-      },
-      user_6: {
-        symbol: 'O',
-        username: 'Mike Wilson',
-        ready: true,
-      },
-    },
-    status: 'finished',
-    winner: 'user_5',
-    board: ['X', 'O', 'X', 'O', 'X', 'O', 'X', 'O', 'X'],
-  },
-  {
-    // Room with unready players
-    id: 'room_3456mnop',
-    hostId: 'user_7',
-    players: {
-      user_7: {
-        symbol: 'X',
-        username: 'Sarah Brown',
-        ready: true,
-      },
-      user_8: {
-        symbol: 'O',
-        username: 'Tom Anderson',
-        ready: false,
-      },
-    },
-    status: 'waiting',
-    board: Array(9).fill(null),
-  },
-  {
-    // Empty room (edge case)
-    id: 'room_7890qrst',
-    hostId: 'user_9',
-    players: {},
-    status: 'waiting',
-    board: Array(9).fill(null),
-  },
-];
 
 const GameRoomList: React.FC<GameRoomListProps> = ({ rooms, onJoinRoom, currentUserId }) => {
   const getStatusColors = (status: GameRoom['status']) => {
@@ -122,8 +39,7 @@ const GameRoomList: React.FC<GameRoomListProps> = ({ rooms, onJoinRoom, currentU
     }
   };
 
-  const getPlayersList = (room: GameRoom) => {
-    console.log("@@ room - inside get palyerslist", room);  
+  const getPlayersList = (room: GameRoom): Array<[string, { username: string; symbol: string }]> => {
     const players = Object.entries(room.players);
     if (players.length === 0) return [];
 

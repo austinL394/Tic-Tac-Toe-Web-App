@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io-client';
-import { GameRoom } from '@/types';
-import { SocketEventHandlers } from '@/types/socket';
+
+import { GameRoom, SocketEventHandlers } from '@/types';
 
 export const setupGameEvents = (
   socket: Socket,

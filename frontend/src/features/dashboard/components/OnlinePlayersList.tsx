@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import classNames from 'classnames';
-import { UserStatus } from '@/types';
-import StatusIndicator from './StatusIndicator';
-import { useSocket } from '@/hooks/useSocket';
-import { useAuthStore } from '@/stores/authStore';
+
 import CloseIcon from '@/components/Icons/CloseIcon';
 import ArrwDown from '@/components/Icons/ArrowDownIcon';
+
+import { useSocket } from '@/hooks/useSocket';
+
+import StatusIndicator from './StatusIndicator';
+
+import { useAuthStore } from '@/stores/authStore';
+
+import { UserStatus } from '@/types';
 interface OnlinePlayersListProps {
   isDrawerOpen: boolean;
   onClose: () => void;

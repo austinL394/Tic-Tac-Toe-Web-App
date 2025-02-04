@@ -18,7 +18,6 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    console.log('@ inside use ef fect get room list', rooms);
     getRoomList();
   }, [socket]);
 

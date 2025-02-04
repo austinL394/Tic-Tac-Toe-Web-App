@@ -1,6 +1,6 @@
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSocket } from '@/hooks/useSocket';
-import { useEffect } from 'react';
 
 import PlayerSection from './components/PlayerSection';
 import GameBoard from './components/GameBoard';
@@ -53,7 +53,6 @@ const GameRoom = () => {
             {/* Left Player */}
             {Object.entries(currentRoom.players)[0] && (
               <PlayerSection
-                playerId={Object.entries(currentRoom.players)[0][0]}
                 player={Object.entries(currentRoom.players)[0][1]}
                 isLeft={true}
                 isCurrentPlayer={Object.entries(currentRoom.players)[0][0] === currentSession?.userId}
@@ -83,7 +82,6 @@ const GameRoom = () => {
 
             {Object.entries(currentRoom.players)[1] && (
               <PlayerSection
-                playerId={Object.entries(currentRoom.players)[1][0]}
                 player={Object.entries(currentRoom.players)[1][1]}
                 isLeft={false}
                 isCurrentPlayer={Object.entries(currentRoom.players)[1][0] === currentSession?.userId}

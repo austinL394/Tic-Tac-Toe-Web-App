@@ -1,4 +1,5 @@
-// components/game/PlayerSection.tsx
+import classNames from 'classnames';
+
 interface Player {
   username: string;
   symbol: 'X' | 'O';
@@ -6,7 +7,6 @@ interface Player {
 }
 
 interface PlayerSectionProps {
-  playerId: string;
   player: Player;
   isLeft: boolean;
   isCurrentPlayer: boolean;
@@ -17,7 +17,6 @@ interface PlayerSectionProps {
 }
 
 const PlayerSection = ({
-  playerId,
   player,
   isLeft,
   isCurrentPlayer,
@@ -27,9 +26,14 @@ const PlayerSection = ({
   onReadyToggle,
 }: PlayerSectionProps) => {
   return (
-    <div className={`w-64 h-[192px] bg-gray-800 p-6 rounded-lg ${isLeft ? 'text-right' : 'text-left'}`}>
+    <div
+      className={classNames('w-64 h-[192px] bg-gray-800 p-6 rounded-lg', {
+        'text-right': isLeft,
+        'text-left': !isLeft,
+      })}
+    >
       {/* Player Info */}
-      <div className={`flex items-center gap-3 ${isLeft ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div className={classNames('flex items-center gap-3', { 'flex-row-reverse': isLeft, 'flex-row': !isLeft })}>
         <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-white text-xl font-bold">
           {player.username[0].toUpperCase()}
         </div>
@@ -43,11 +47,12 @@ const PlayerSection = ({
       </div>
 
       {/* Status Section */}
-      <div className={`mt-4 flex flex-col ${isLeft ? 'items-end' : 'items-start'}`}>
+      <div className={classNames('mt-4 flex flex-col', { 'items-end': isLeft, 'items-start': !isLeft })}>
         <span
-          className={`px-3 py-1 rounded-full text-sm ${
-            player.ready ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-400'
-          }`}
+          className={classNames(`px-3 py-1 rounded-full text-sm`, {
+            'bg-green-500/10 text-green-500': player.ready,
+            'bg-yellow-500/10 text-yellow-400': !player.ready,
+          })}
         >
           {player.ready ? 'Ready' : 'Not Ready'}
         </span>

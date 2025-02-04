@@ -6,8 +6,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { setupUserEvents } from '@/services/socket/userEvents';
 import { setupGameEvents } from '@/services/socket/gameEvents';
 import { SocketService } from '@/services/socket/socketService';
-import { SocketContextType, OnlineUser, UserSession } from '../types/socket';
-import { UserStatus, GameRoom } from '@/types';
+
+import { SocketContextType, OnlineUser, UserSession, UserStatus, GameRoom } from '@/types';
 
 export const SocketContext = createContext<SocketContextType | undefined>(undefined);
 

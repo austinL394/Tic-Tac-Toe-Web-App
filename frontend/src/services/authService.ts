@@ -1,6 +1,7 @@
+import { useAuthStore } from '@/stores/authStore';
 import api from './api';
-import { useAuthStore } from '../stores/authStore';
-import { OnlineUser } from '@/types/socket';
+
+import { User } from '@/types';
 
 export interface LoginCredentials {
   username: string;
@@ -18,7 +19,7 @@ export interface RegisterCredentials {
 export interface AuthResponse {
   success: boolean;
   message: string;
-  user: OnlineUser;
+  user: User;
   token: string;
 }
 

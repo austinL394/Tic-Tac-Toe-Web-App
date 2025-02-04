@@ -1,4 +1,5 @@
-// components/game/GameCell.tsx
+import classNames from 'classnames';
+
 interface GameCellProps {
   value: string | null;
   position: number;
@@ -12,9 +13,13 @@ const GameCell = ({ value, position, isMyTurn, isPlayable, onClick }: GameCellPr
 
   return (
     <button
-      className={`w-20 h-20 bg-gray-800 border border-gray-700 flex items-center justify-center text-4xl font-bold
-          ${isClickable ? 'hover:bg-gray-700 cursor-pointer' : 'cursor-not-allowed'}
-          transition-colors duration-200`}
+      className={classNames(
+        'w-20 h-20 bg-gray-800 border border-gray-700 flex items-center justify-center text-4xl font-bold transition-colors duration-200',
+        {
+          'hover:bg-gray-700 cursor-pointer': isClickable,
+          'cursor-not-allowed': !isClickable,
+        },
+      )}
       onClick={() => isClickable && onClick(position)}
       disabled={!isClickable}
     >

@@ -1,13 +1,7 @@
 import create from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface User {
-  id: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
+import { User } from '@/types';
 
 interface PersistedState {
   user: User | null;
@@ -16,7 +10,6 @@ interface PersistedState {
   isLoading: boolean;
 }
 
-// Full state interface including actions
 interface AuthState extends PersistedState {
   login: (user: User, token: string) => void;
   logout: () => void;

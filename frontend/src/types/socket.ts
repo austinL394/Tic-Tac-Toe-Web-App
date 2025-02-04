@@ -1,5 +1,10 @@
 import { Socket } from 'socket.io-client';
-import { GameRoom, UserStatus } from '.';
+
+export enum UserStatus {
+  ONLINE = 'online',
+  BUSY = 'busy',
+  INGAME = 'in-game',
+}
 
 export interface OnlineUser {
   userId: string;
@@ -55,4 +60,22 @@ export interface UserEventHandlers {
     id: string;
     username: string;
   };
+}
+
+export interface GameRoom {
+  id: string;
+  hostId: string;
+  players: {
+    [userId: string]: {
+      symbol: 'X' | 'O';
+      username: string;
+      firstName: string;
+      lastName: string;
+      ready: boolean;
+    };
+  };
+  status: 'waiting' | 'playing' | 'finished';
+  board: Array<string | null>;
+  currentTurn?: string;
+  winner?: string;
 }

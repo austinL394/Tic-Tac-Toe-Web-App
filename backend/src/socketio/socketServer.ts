@@ -4,6 +4,7 @@ import { AuthMiddleware } from "./middleware/authMiddleware";
 import { UserService } from "./services/userService";
 
 import * as dotenv from "dotenv";
+
 import { SharedStore } from "./store/sharedStore";
 import { GameService } from "./services/gameService";
 

@@ -9,7 +9,6 @@ import { Server } from "socket.io";
 import SocketService from "./socketio/socketServer";
 
 import * as cors from "cors"; // Import cors
-import { CorsOptions } from "cors"; // Import CorsOptions type
 
 dotenv.config();
 
@@ -28,7 +27,7 @@ AppDataSource.initialize()
       },
     });
 
-    const socketServer = new SocketService(io);
+    new SocketService(io);
 
     http.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
