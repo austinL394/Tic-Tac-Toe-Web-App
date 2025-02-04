@@ -11,10 +11,8 @@ import Register from './features/register/Register';
 import { Login } from './features/login/Login';
 import Dashboard from './features/dashboard/Dashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import GameBoard from './features/gameboard/GameBoard';
-import GameRoom from './features/gameboard/GameBoard';
+import GameRoom from './features/game/GameRoom';
 import { RootLayout } from './components/Layout/RootLayout';
-
 
 // App.tsx
 const router = createBrowserRouter([
@@ -40,14 +38,6 @@ const router = createBrowserRouter([
       {
         path: '/game/:roomId',
         element: <GameRoom />,
-      },
-      {
-        path: '/gameboard',
-        element: (
-          <ProtectedRoute>
-            <GameBoard />
-          </ProtectedRoute>
-        ),
       },
       {
         path: '/',

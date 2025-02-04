@@ -31,4 +31,10 @@ export interface GameRoom {
   board: Array<string | null>;
   currentTurn?: string;
   winner?: string;
+  lastMoveAt: Date;
+}
+
+export interface MovePayload {
+  roomId: string;
+  position: number;
 }

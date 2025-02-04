@@ -1,8 +1,8 @@
+// src/services/gameService.ts
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { v4 as uuidv4 } from "uuid";
 import { BaseService } from "./baseService";
-import { GameRoom, UserStatus } from "../../types";
-import { ServiceRegistry } from "../serviceRegistry";
+import { GameRoom, MovePayload, UserStatus } from "../../types";
 
 export class GameService extends BaseService {
   constructor(io: SocketIOServer) {
@@ -12,35 +12,27 @@ export class GameService extends BaseService {
   setupEvents(socket: Socket) {
     const userId = socket.data.userId;
 
-    socket.on("game:create_room", () => {
-      console.log("@@@ handling game create event:", userId);
-      this.handleCreateRoom(socket, userId);
-    });
-
-    socket.on("game:join_room", (roomId: string) => {
-      this.handleJoinRoom(socket, userId, roomId);
-    });
-
-    socket.on("game:room_leave", (roomId: string) => {
-      this.handleLeaveRoom(socket, userId, roomId);
-    });
-
-    socket.on("game:get_room", (roomId: string) => {
-      this.handleGetRoom(socket, roomId);
-    });
-
-    socket.on("game:room_list", () => {
-      this.handleGetRoomList(socket);
-    });
-
-    socket.on("game:toggle_ready", (roomId: string) => {
-      this.handleToggleReady(socket, userId, roomId);
-    });
-
-    // Handle disconnection
-    socket.on("disconnect", () => {
-      this.handleDisconnect(socket, userId);
-    });
+    socket.on("game:create_room", () => this.handleCreateRoom(socket, userId));
+    socket.on("game:join_room", (roomId: string) =>
+      this.handleJoinRoom(socket, userId, roomId)
+    );
+    socket.on("game:room_leave", (roomId: string) =>
+      this.handleLeaveRoom(socket, userId, roomId)
+    );
+    socket.on("game:get_room", (roomId: string) =>
+      this.handleGetRoom(socket, roomId)
+    );
+    socket.on("game:room_list", () => this.handleGetRoomList(socket));
+    socket.on("game:toggle_ready", (roomId: string) =>
+      this.handleToggleReady(socket, userId, roomId)
+    );
+    socket.on("game:make_move", (moveData: MovePayload) =>
+      this.handleMove(socket, userId, moveData)
+    );
+    socket.on("game:request_rematch", (roomId: string) =>
+      this.handleRematchRequest(socket, userId, roomId)
+    );
+    socket.on("disconnect", () => this.handleDisconnect(socket, userId));
   }
 
   private handleCreateRoom(socket: Socket, userId: string) {
@@ -51,15 +43,12 @@ export class GameService extends BaseService {
         return;
       }
 
-      // Check if user is already in a room
       const existingRoom = this.findUserRoom(userId);
       if (existingRoom) {
-        console.log("@@ already in room:", existingRoom);
         socket.emit("game:error", "You are already in a room");
         return;
       }
 
-      // Create new game room
       const roomId = uuidv4();
       const gameRoom: GameRoom = {
         id: roomId,
@@ -75,42 +64,19 @@ export class GameService extends BaseService {
         },
         status: "waiting",
         board: Array(9).fill(null),
+        lastMoveAt: new Date(),
       };
 
-      // Join socket room
       socket.join(roomId);
-
-      // Update user status
       this.store.updateUser(userId, { status: UserStatus.INGAME });
-
-      // Store game room
       this.store.setGameRoom(roomId, gameRoom);
 
-      // Notify room creation
       socket.emit("game:room_created", gameRoom);
-
-      // Broadcast updated room list
       this.broadcastRoomList();
     } catch (error) {
-      console.error("Error creating room:", error);
+      this.error("Error creating room:", error);
       socket.emit("game:error", "Failed to create room");
     }
-  }
-
-  private handleGetRoom(socket: Socket, roomId: string) {
-    const gameRoom = this.store.getGameRoom(roomId);
-    if (gameRoom) {
-      socket.emit("game:room_state", gameRoom);
-    } else {
-      socket.emit("game:error", "Room not found");
-    }
-  }
-
-  private handleGetRoomList(socket: Socket) {
-    const rooms = this.store.getAllGameRooms();
-    console.log("@ all rooms", rooms);
-
-    socket.emit("game:room_list", rooms);
   }
 
   private handleJoinRoom(socket: Socket, userId: string, roomId: string) {
@@ -133,7 +99,6 @@ export class GameService extends BaseService {
         return;
       }
 
-      // Add player to room
       gameRoom.players[userId] = {
         symbol: "O",
         username: user.username,
@@ -142,24 +107,73 @@ export class GameService extends BaseService {
         ready: false,
       };
 
-      // Join socket room
       socket.join(roomId);
-
-      // Update user status
       this.store.updateUser(userId, { status: UserStatus.INGAME });
-
-      // Update game room
       this.store.setGameRoom(roomId, gameRoom);
+
       socket.emit("game:room_joined", gameRoom);
-
-      // Notify all players in room
       this.io.to(roomId).emit("game:room_state", gameRoom);
-
-      // Broadcast updated room list
       this.broadcastRoomList();
     } catch (error) {
-      console.error("Error joining room:", error);
+      this.error("Error joining room:", error);
       socket.emit("game:error", "Failed to join room");
+    }
+  }
+
+  private handleMove(
+    socket: Socket,
+    userId: string,
+    { position, roomId }: MovePayload
+  ) {
+    try {
+      const gameRoom = this.store.getGameRoom(roomId);
+
+      if (!gameRoom) {
+        socket.emit("game:error", "Room not found");
+        return;
+      }
+
+      if (gameRoom.status !== "playing") {
+        socket.emit("game:error", "Game is not in progress");
+        return;
+      }
+
+      if (gameRoom.currentTurn !== userId) {
+        socket.emit("game:error", "Not your turn");
+        return;
+      }
+
+      if (position < 0 || position > 8 || gameRoom.board[position] !== null) {
+        socket.emit("game:error", "Invalid move");
+        return;
+      }
+
+      const playerSymbol = gameRoom.players[userId].symbol;
+      gameRoom.board[position] = playerSymbol;
+
+      const gameResult = this.checkGameResult(gameRoom.board);
+
+      if (gameResult.hasResult) {
+        gameRoom.status = "finished";
+        gameRoom.winner = gameResult.isDraw ? "draw" : userId;
+
+        Object.keys(gameRoom.players).forEach((playerId) => {
+          this.store.updateUser(playerId, { status: UserStatus.ONLINE });
+        });
+      } else {
+        const playerIds = Object.keys(gameRoom.players);
+        gameRoom.currentTurn = playerIds.find((id) => id !== userId)!;
+      }
+
+      this.store.setGameRoom(roomId, gameRoom);
+      this.io.to(roomId).emit("game:room_state", gameRoom);
+
+      if (gameRoom.status === "finished") {
+        this.broadcastRoomList();
+      }
+    } catch (error) {
+      this.error("Error handling move:", error);
+      socket.emit("game:error", "Failed to make move");
     }
   }
 
@@ -167,10 +181,8 @@ export class GameService extends BaseService {
     const gameRoom = this.store.getGameRoom(roomId);
     if (!gameRoom || !gameRoom.players[userId]) return;
 
-    // Toggle ready status
     gameRoom.players[userId].ready = !gameRoom.players[userId].ready;
 
-    // Check if all players are ready
     const allPlayersReady = Object.values(gameRoom.players).every(
       (player) => player.ready
     );
@@ -178,17 +190,34 @@ export class GameService extends BaseService {
     if (allPlayersReady && Object.keys(gameRoom.players).length === 2) {
       gameRoom.status = "playing";
       gameRoom.currentTurn = gameRoom.hostId;
+      gameRoom.board = Array(9).fill(null);
     }
 
-    // Update game room
     this.store.setGameRoom(roomId, gameRoom);
-
-    // Notify all players in room
     this.io.to(roomId).emit("game:room_state", gameRoom);
 
-    // Broadcast updated room list if status changed
     if (gameRoom.status === "playing") {
       this.broadcastRoomList();
+    }
+  }
+
+  private handleRematchRequest(socket: Socket, userId: string, roomId: string) {
+    const gameRoom = this.store.getGameRoom(roomId);
+    if (!gameRoom || gameRoom.status !== "finished") return;
+
+    const player = gameRoom.players[userId];
+    if (!player) return;
+
+    player.ready = true;
+
+    const allPlayersReady = Object.values(gameRoom.players).every(
+      (p) => p.ready
+    );
+    if (allPlayersReady) {
+      this.resetGame(roomId);
+    } else {
+      this.store.setGameRoom(roomId, gameRoom);
+      this.io.to(roomId).emit("game:room_state", gameRoom);
     }
   }
 
@@ -197,14 +226,10 @@ export class GameService extends BaseService {
       const gameRoom = this.store.getGameRoom(roomId);
       if (!gameRoom) return;
 
-      // Remove player from room
       delete gameRoom.players[userId];
       socket.leave(roomId);
-
-      // Update leaving player's status
       this.store.updateUser(userId, { status: UserStatus.ONLINE });
 
-      // If host leaves, remove room
       if (userId === gameRoom.hostId) {
         const otherPlayerId = Object.keys(gameRoom.players)[0];
         if (otherPlayerId) {
@@ -213,21 +238,33 @@ export class GameService extends BaseService {
         }
         this.store.removeGameRoom(roomId);
       } else {
-        // Update room status back to waiting
         gameRoom.status = "waiting";
         delete gameRoom.currentTurn;
         gameRoom.board = Array(9).fill(null);
         this.store.setGameRoom(roomId, gameRoom);
         this.io.to(roomId).emit("game:room_state", gameRoom);
       }
-      socket.emit("game:room_left");
 
-      // Broadcast updated room list
+      socket.emit("game:room_left");
       this.broadcastRoomList();
     } catch (error) {
-      console.error("Error leaving room:", error);
+      this.error("Error leaving room:", error);
       socket.emit("game:error", "Failed to leave room");
     }
+  }
+
+  private handleGetRoom(socket: Socket, roomId: string) {
+    const gameRoom = this.store.getGameRoom(roomId);
+    if (gameRoom) {
+      socket.emit("game:room_state", gameRoom);
+    } else {
+      socket.emit("game:error", "Room not found");
+    }
+  }
+
+  private handleGetRoomList(socket: Socket) {
+    const rooms = this.store.getAllGameRooms();
+    socket.emit("game:room_list", rooms);
   }
 
   private handleDisconnect(socket: Socket, userId: string) {
@@ -235,6 +272,47 @@ export class GameService extends BaseService {
     if (room) {
       this.handleLeaveRoom(socket, userId, room.id);
     }
+  }
+
+  private checkGameResult(board: (string | null)[]) {
+    const winPatterns = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8], // Rows
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8], // Columns
+      [0, 4, 8],
+      [2, 4, 6], // Diagonals
+    ];
+
+    for (const pattern of winPatterns) {
+      const [a, b, c] = pattern;
+      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+        return { hasResult: true, isDraw: false };
+      }
+    }
+
+    const isDraw = board.every((cell) => cell !== null);
+    return { hasResult: isDraw, isDraw };
+  }
+
+  private resetGame(roomId: string) {
+    const gameRoom = this.store.getGameRoom(roomId);
+    if (!gameRoom) return;
+
+    gameRoom.status = "waiting";
+    gameRoom.board = Array(9).fill(null);
+    gameRoom.currentTurn = undefined;
+    gameRoom.winner = undefined;
+
+    Object.keys(gameRoom.players).forEach((playerId) => {
+      gameRoom.players[playerId].ready = false;
+    });
+
+    this.store.setGameRoom(roomId, gameRoom);
+    this.io.to(roomId).emit("game:room_state", gameRoom);
+    this.broadcastRoomList();
   }
 
   private findUserRoom(userId: string): GameRoom | undefined {
