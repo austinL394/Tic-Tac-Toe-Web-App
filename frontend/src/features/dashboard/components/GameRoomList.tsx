@@ -2,7 +2,7 @@ import JoinIcon from '@/components/Icons/JoinIcon';
 import { GameRoom } from '@/types';
 import classNames from 'classnames';
 
-interface GameRoomsProps {
+interface GameRoomListProps {
   rooms: GameRoom[];
   onJoinRoom?: (roomId: string) => void;
   currentUserId?: string;
@@ -92,7 +92,7 @@ export const mockRooms: GameRoom[] = [
   },
 ];
 
-const GameRooms: React.FC<GameRoomsProps> = ({ rooms, onJoinRoom, currentUserId }) => {
+const GameRoomList: React.FC<GameRoomListProps> = ({ rooms, onJoinRoom, currentUserId }) => {
   const getStatusColors = (status: GameRoom['status']) => {
     switch (status) {
       case 'waiting':
@@ -123,6 +123,7 @@ const GameRooms: React.FC<GameRoomsProps> = ({ rooms, onJoinRoom, currentUserId 
   };
 
   const getPlayersList = (room: GameRoom) => {
+    console.log("@@ room - inside get palyerslist", room);  
     const players = Object.entries(room.players);
     if (players.length === 0) return [];
 
@@ -135,7 +136,7 @@ const GameRooms: React.FC<GameRoomsProps> = ({ rooms, onJoinRoom, currentUserId 
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {mockRooms.map((room) => {
+      {rooms.map((room) => {
         const players = getPlayersList(room);
         const canJoin =
           room.status === 'waiting' &&
@@ -223,4 +224,4 @@ const GameRooms: React.FC<GameRoomsProps> = ({ rooms, onJoinRoom, currentUserId 
   );
 };
 
-export default GameRooms;
+export default GameRoomList;

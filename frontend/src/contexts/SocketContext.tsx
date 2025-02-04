@@ -10,11 +10,13 @@ interface SocketContextType {
   onlineUsers: OnlineUser[];
   currentSession: UserSession | null;
   rooms: GameRoom;
+  currentRoom: GameRoom;
   connect: () => void;
   disconnect: () => void;
   updateUserStatus: (status: UserStatus) => void;
 
   createRoom: () => void;
+  getRoomList: () => void;
   joinRoom: (roomId: string) => void;
   leaveRoom: (roomId: string) => void;
   toggleReady: (roomId: string) => void;
@@ -43,7 +45,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [currentSession, setCurrentSession] = useState<UserSession | null>(null);
   // Game-related state
-  const [rooms, setRooms] = useState<GameRoom[]>([]);
+  const [rooms, setRooms] = useState<Array<GameRoom>>([]);
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
   const [gameError, setGameError] = useState<string | null>(null);
 
@@ -110,6 +112,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     [currentRoom],
   );
 
+  const getRoomList = () => {
+    console.log('@ ghet room list');
+    if (!socketRef.current?.connected) return;
+    socketRef.current.emit('game:room_list');
+  };
+
   const connect = useCallback(() => {
     if (socketRef.current?.connected || !isAuthenticated || !token || !user) return;
 
@@ -157,6 +165,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     socket.on('game:room_created', (room: GameRoom) => {
       setCurrentRoom(room);
+      alert("@@@ room created event");  
       navigate(`/game/${room.id}`);
     });
 
@@ -247,6 +256,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     leaveRoom,
     toggleReady,
     makeMove,
+    getRoomList,
   };
 
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;

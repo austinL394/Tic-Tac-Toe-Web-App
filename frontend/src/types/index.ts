@@ -9,14 +9,15 @@ export interface GameRoom {
   hostId: string;
   players: {
     [userId: string]: {
-      symbol: "X" | "O";
+      symbol: 'X' | 'O';
       username: string;
       firstName: string;
       lastName: string;
       ready: boolean;
     };
   };
-  status: "waiting" | "playing" | "finished";
+  status: 'waiting' | 'playing' | 'finished';
+  playerCount: number;
   board: Array<string | null>;
   currentTurn?: string;
   winner?: string;

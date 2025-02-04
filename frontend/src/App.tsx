@@ -13,36 +13,13 @@ import Dashboard from './features/dashboard/Dashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import GameBoard from './features/gameboard/GameBoard';
 import GameRoom from './features/gameboard/GameBoard';
+import { RootLayout } from './components/Layout/RootLayout';
 
-// RootLayout.tsx
-import { Outlet } from 'react-router-dom';
-import { SocketProvider } from './contexts/SocketContext';
-import MainLayout from './components/Layout/MainLayout';
-
-// Create a client
-const queryClient = new QueryClient();
-
-interface RootLayoutProps {
-  queryClient: QueryClient;
-}
-
-export function RootLayout({ queryClient }: RootLayoutProps) {
-  return (
-    <SocketProvider>
-      <MainLayout>
-        <QueryClientProvider client={queryClient}>
-          <Outlet />
-          <ReactQueryDevtools initialIsOpen={false} />
-        </QueryClientProvider>
-      </MainLayout>
-    </SocketProvider>
-  );
-}
 
 // App.tsx
 const router = createBrowserRouter([
   {
-    element: <RootLayout queryClient={queryClient} />,
+    element: <RootLayout />,
     children: [
       {
         path: '/login',

@@ -29,6 +29,10 @@ export class GameService extends BaseService {
       this.handleGetRoom(socket, roomId);
     });
 
+    socket.on("game:room_list", () => {
+      this.handleGetRoomList(socket);
+    });
+
     socket.on("game:toggle_ready", (roomId: string) => {
       this.handleToggleReady(socket, userId, roomId);
     });
@@ -50,6 +54,7 @@ export class GameService extends BaseService {
       // Check if user is already in a room
       const existingRoom = this.findUserRoom(userId);
       if (existingRoom) {
+        console.log("@@ already in room:", existingRoom);
         socket.emit("game:error", "You are already in a room");
         return;
       }
@@ -99,6 +104,13 @@ export class GameService extends BaseService {
     } else {
       socket.emit("game:error", "Room not found");
     }
+  }
+
+  private handleGetRoomList(socket: Socket) {
+    const rooms = this.store.getAllGameRooms();
+    console.log("@ all rooms", rooms);
+
+    socket.emit("game:room_list", rooms);
   }
 
   private handleJoinRoom(socket: Socket, userId: string, roomId: string) {
@@ -230,12 +242,7 @@ export class GameService extends BaseService {
   }
 
   private broadcastRoomList() {
-    const rooms = this.store.getAllGameRooms().map((room) => ({
-      id: room.id,
-      hostId: room.hostId,
-      status: room.status,
-      playerCount: Object.keys(room.players).length,
-    }));
+    const rooms = this.store.getAllGameRooms();
     this.io.emit("game:room_list", rooms);
   }
 }

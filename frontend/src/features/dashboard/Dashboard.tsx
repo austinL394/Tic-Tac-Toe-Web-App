@@ -1,20 +1,29 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import classNames from 'classnames';
 
 import { OnlinePlayersList } from './components/OnlinePlayersList';
 import PlusIcon from '@/components/Icons/PlusIcon';
 import MinusIcon from '@/components/Icons/MinusIcon';
-import GameRooms from './components/GameRooms';
 
 import { useSocket } from '@/hooks/useSocket';
+import GameRoomList from './components/GameRoomList';
 
 const Dashboard = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const { createRoom, rooms } = useSocket();
+  const { createRoom, rooms, getRoomList, joinRoom, socket } = useSocket();
 
   const handleClickCreateRoom = () => {
     createRoom();
+  };
+
+  useEffect(() => {
+    console.log('@ inside use ef fect get room list', rooms);
+    getRoomList();
+  }, []);
+
+  const handleJoinRoom = (roomId: string) => {
+    joinRoom(roomId);
   };
 
   return (
@@ -38,7 +47,7 @@ const Dashboard = () => {
           Create Room
         </button>
 
-        <GameRooms rooms={rooms} />
+        <GameRoomList rooms={rooms} onJoinRoom={handleJoinRoom} />
       </div>
 
       <OnlinePlayersList isDrawerOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
