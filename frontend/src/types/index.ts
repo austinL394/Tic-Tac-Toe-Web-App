@@ -17,7 +17,6 @@ export interface GameRoom {
     };
   };
   status: 'waiting' | 'playing' | 'finished';
-  playerCount: number;
   board: Array<string | null>;
   currentTurn?: string;
   winner?: string;

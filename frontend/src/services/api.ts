@@ -1,4 +1,3 @@
-// src/services/api.ts
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
@@ -32,14 +31,6 @@ api.interceptors.response.use(
     // Handle 401 errors (unauthorized)
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      alert("SDDSDFSDF");
-
-      // If refresh token logic is needed, implement it here
-      // const newToken = await refreshToken();
-      // if (newToken) {
-      //   useAuthStore.getState().login(useAuthStore.getState().user!, newToken);
-      //   return api(originalRequest);
-      // }
 
       useAuthStore.getState().logout();
       window.location.href = '/login';

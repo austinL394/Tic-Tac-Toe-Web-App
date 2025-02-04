@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useSocket } from '@/hooks/useSocket';
 import { useEffect } from 'react';
 
@@ -10,11 +10,13 @@ const GameRoom = () => {
   const { roomId } = useParams();
   const { currentRoom, leaveRoom, toggleReady, makeMove } = useSocket();
   const { currentSession } = useSocket();
+  const navigate = useNavigate();
 
   useEffect(() => {
     return () => {
       if (currentRoom?.id) {
         leaveRoom(currentRoom.id);
+        navigate('/');
       }
     };
   }, []);

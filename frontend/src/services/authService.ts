@@ -1,7 +1,6 @@
-// src/services/authService.ts
 import api from './api';
 import { useAuthStore } from '../stores/authStore';
-import { User } from '@/types';
+import { OnlineUser } from '@/types/socket';
 
 export interface LoginCredentials {
   username: string;
@@ -19,7 +18,7 @@ export interface RegisterCredentials {
 export interface AuthResponse {
   success: boolean;
   message: string;
-  user: User;
+  user: OnlineUser;
   token: string;
 }
 
@@ -51,20 +50,10 @@ export const authService = {
     }
   },
 
-  async getProfile() {
-    try {
-      const response = await api.get<User>('/auth/profile');
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-
   async checkAuthStatus() {
     try {
       const response = await api.get<AuthResponse>('/auth/check');
       if (response.data.success) {
-        console.log("@@ resons data", response.data);
         useAuthStore.getState().login(response.data.user, response.data.token);
         return response.data;
       } else {

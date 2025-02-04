@@ -7,7 +7,6 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import GameRoom from './features/game/GameRoom';
 import { RootLayout } from './components/Layout/RootLayout';
 
-// App.tsx
 const router = createBrowserRouter([
   {
     element: <RootLayout />,

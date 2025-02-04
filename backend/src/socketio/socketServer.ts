@@ -10,7 +10,6 @@ import { GameService } from "./services/gameService";
 dotenv.config();
 const { JWT_SECRET = "password_secret" } = process.env;
 
-// types.ts
 export interface TokenPayload {
   id: string;
   username: string;
