@@ -150,6 +150,7 @@ export class GameService extends BaseService {
 
       // Update game room
       this.store.setGameRoom(roomId, gameRoom);
+      socket.emit("game:room_joined", gameRoom);
 
       // Notify all players in room
       this.io.to(roomId).emit("game:room_state", gameRoom);

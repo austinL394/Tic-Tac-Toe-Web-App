@@ -47,7 +47,7 @@ const GameRoom = () => {
                 <div className="flex items-center gap-4">
                   <span
                     className={`px-3 py-1 rounded-full text-sm ${
-                      player.ready ? 'bg-green-500/10 text-green-400' : 'bg-yellow-500/10 text-yellow-400'
+                      player.ready ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-400'
                     }`}
                   >
                     {player.ready ? 'Ready' : 'Not Ready'}

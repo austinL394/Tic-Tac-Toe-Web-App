@@ -84,7 +84,6 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     (roomId: string) => {
       if (!socketRef.current?.connected) return;
       socketRef.current.emit('game:join_room', roomId);
-      navigate(`/game/${roomId}`);
     },
     [navigate],
   );
@@ -165,7 +164,11 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     socket.on('game:room_created', (room: GameRoom) => {
       setCurrentRoom(room);
-      alert("@@@ room created event");  
+      navigate(`/game/${room.id}`);
+    });
+
+    socket.on('game:room_joined', (room: GameRoom) => {
+      setCurrentRoom(room);
       navigate(`/game/${room.id}`);
     });
 
