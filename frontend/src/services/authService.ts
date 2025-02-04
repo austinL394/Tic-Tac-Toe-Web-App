@@ -26,7 +26,7 @@ export interface AuthResponse {
 export const authService = {
   async login(credentials: LoginCredentials) {
     try {
-      const response = await api.post<AuthResponse>('/auth/login', credentials);
+      const response = await api.post<AuthResponse>('/api/auth/login', credentials);
       return response.data;
     } catch (error) {
       throw error;
@@ -35,7 +35,7 @@ export const authService = {
 
   async register(credentials: RegisterCredentials) {
     try {
-      const response = await api.post<AuthResponse>('/auth/register', credentials);
+      const response = await api.post<AuthResponse>('/api/auth/register', credentials);
       return response.data;
     } catch (error) {
       throw error;

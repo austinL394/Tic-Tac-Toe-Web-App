@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 import { payload } from "../dto/user.dto";
 
 dotenv.config();
-const { JWT_SECRET = "password_secret" } = process.env;
+const { JWT_SECRET } = process.env;
 
 export class encrypt {
   static async encryptpass(password: string): Promise<string> {
@@ -20,6 +20,6 @@ export class encrypt {
     if (!JWT_SECRET) {
       throw new Error("JWT_SECRET is not defined");
     }
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: "1d" });
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: 5000 });
   }
 }

@@ -34,7 +34,7 @@ export const setupGameEvents = (
     // Notify about player changes
     if (room.players) {
       const playerCount = Object.keys(room.players).length;
-      if (playerCount === 2) {
+      if (playerCount === 2 && room.status === "waiting") {
         toast.showInfo('All players have joined. Game is ready to start!');
       }
     }

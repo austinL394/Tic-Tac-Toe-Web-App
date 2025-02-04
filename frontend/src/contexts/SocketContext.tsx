@@ -17,6 +17,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const socketRef = useRef<Socket | null>(null);
   const socketService = useRef<SocketService | null>(null);
   const toast = useToast();
+  const logout = useAuthStore((store) => store.logout);
 
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
@@ -84,6 +85,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setCurrentSession(null);
       setGameError('Connection error');
       toast.showError(`Connection error: ${error.message}`);
+      if (error.message === 'Invalid authentication token') {
+        logout();
+      }
     });
 
     // Disconnect handling

@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import LoginLayout from '@/components/Layout/LoginLayout';
 import { authService } from '@/services/authService';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -16,7 +15,6 @@ type FormInputs = {
 const Register = () => {
   const navigate = useNavigate();
   const isLoading = useAuthStore((state) => state.isLoading);
-  const login = useAuthStore((state) => state.login);
 
   const {
     register,

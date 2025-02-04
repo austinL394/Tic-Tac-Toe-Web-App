@@ -99,8 +99,15 @@ export class GameService extends BaseService {
         return;
       }
 
+      let symbol: "O" | "X" = "O";
+
+      if (gameRoom.hostId === user.userId) {
+        socket.emit("game:error", "You are the host of the game room.");
+        symbol = "X";
+      }
+
       gameRoom.players[userId] = {
-        symbol: "O",
+        symbol: symbol,
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
