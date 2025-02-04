@@ -1,4 +1,3 @@
-// components/game/GameStatus.tsx
 interface GameStatusProps {
   status: 'waiting' | 'playing' | 'finished';
   playersCount: number;

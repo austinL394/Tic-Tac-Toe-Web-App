@@ -1,12 +1,5 @@
 import { createBrowserRouter, redirect, RouterProvider } from 'react-router-dom';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-
-// import { Reports } from 'features/reports';
-
-import './App.css';
-import 'draft-js/dist/Draft.css';
 import Register from './features/register/Register';
 import { Login } from './features/login/Login';
 import Dashboard from './features/dashboard/Dashboard';

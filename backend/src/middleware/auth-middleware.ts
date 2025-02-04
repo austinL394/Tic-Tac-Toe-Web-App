@@ -1,7 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import * as jwt from "jsonwebtoken";
-import { AppDataSource } from "../data-source";
-import { User } from "../entity/User";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -36,15 +34,4 @@ export const authentification = (
     res.status(401).json({ message: "Invalid token" });
     return;
   }
-};
-
-export const authorization = (roles: string[]) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    const userRepo = AppDataSource.getRepository(User);
-    const user = await userRepo.findOne({
-      where: { id: req[" currentUser"].id },
-    });
-    console.log(user);
-    next();
-  };
 };
