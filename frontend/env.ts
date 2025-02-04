@@ -1,11 +1,13 @@
-import { z } from 'zod';
+// env.ts
 import { defineConfig } from '@julr/vite-plugin-validate-env';
-
-const schema = z.object({
-  VITE_API_URL: z.string().url().min(1),
-});
+import { z } from 'zod';
 
 export default defineConfig({
   validator: 'zod',
-  schema,
+  schema: {
+    VITE_API_URL: z
+      .string()
+      .regex(/^https?:/)
+      .url(),
+  },
 });

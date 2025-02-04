@@ -8,6 +8,7 @@ import { setupGameEvents } from '@/services/socket/gameEvents';
 import { SocketService } from '@/services/socket/socketService';
 
 import { SocketContextType, OnlineUser, UserSession, UserStatus, GameRoom } from '@/types';
+import { useToast } from './ToastrContext';
 
 export const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
@@ -15,6 +16,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const navigate = useNavigate();
   const socketRef = useRef<Socket | null>(null);
   const socketService = useRef<SocketService | null>(null);
+  const toast = useToast();
 
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
@@ -48,6 +50,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setIsConnected,
       navigate,
       user,
+      toast,
     };
 
     socket.on('connect', () => {
@@ -57,6 +60,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         status: UserStatus.ONLINE,
         lastActivity: new Date(),
       });
+
+      toast.showSuccess('Connected to server');
 
       // Setup heartbeat
       const heartbeatInterval = setInterval(() => {
@@ -78,6 +83,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setIsConnected(false);
       setCurrentSession(null);
       setGameError('Connection error');
+      toast.showError(`Connection error: ${error.message}`);
     });
 
     // Disconnect handling
@@ -87,6 +93,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setRooms([]);
       setCurrentRoom(null);
       setGameError(null);
+      toast.showWarning('Disconnected from server');
     });
 
     // Auto-away feature
@@ -104,7 +111,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       socket.off('connect_error');
       socket.off('disconnect');
     };
-  }, [isAuthenticated, token, user, navigate]);
+  }, [isAuthenticated, token, user, navigate, toast]);
 
   const disconnect = useCallback(() => {
     if (socketRef.current) {

@@ -1,14 +1,20 @@
-import { SocketProvider } from '@/contexts/SocketContext';
 import { Outlet } from 'react-router-dom';
 
-import MainLayout from './MainLayout';
+import { SocketProvider } from '@/contexts/SocketContext';
+import { ToastProvider } from '@/contexts/ToastrContext';
+
+import MainLayout from '@/components/Layout/MainLayout';
+import { Toaster } from 'react-hot-toast';
 
 export function RootLayout() {
   return (
-    <SocketProvider>
-      <MainLayout>
-        <Outlet />
-      </MainLayout>
-    </SocketProvider>
+    <ToastProvider>
+      <SocketProvider>
+        <MainLayout>
+          <Outlet />
+        </MainLayout>
+      </SocketProvider>
+      <Toaster />
+    </ToastProvider>
   );
 }

@@ -1,3 +1,5 @@
+import { Dispatch, SetStateAction } from 'react';
+import { Toast } from 'react-hot-toast';
 import { Socket } from 'socket.io-client';
 
 export enum UserStatus {
@@ -39,27 +41,36 @@ export interface SocketContextType {
   makeMove: (position: number) => void;
 }
 
+interface ToastContext {
+  showSuccess: (message: string) => void;
+  showError: (message: string) => void;
+  showInfo: (message: string) => void;
+  showWarning: (message: string) => void;
+}
+
 export interface SocketEventHandlers {
-  setOnlineUsers: React.Dispatch<React.SetStateAction<OnlineUser[]>>;
-  setCurrentSession: React.Dispatch<React.SetStateAction<UserSession | null>>;
-  setRooms: React.Dispatch<React.SetStateAction<GameRoom[]>>;
-  setCurrentRoom: React.Dispatch<React.SetStateAction<GameRoom | null>>;
-  setGameError: React.Dispatch<React.SetStateAction<string | null>>;
-  setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
+  setOnlineUsers: Dispatch<SetStateAction<OnlineUser[]>>;
+  setCurrentSession: Dispatch<SetStateAction<UserSession | null>>;
+  setRooms: Dispatch<SetStateAction<GameRoom[]>>;
+  setCurrentRoom: Dispatch<SetStateAction<GameRoom | null>>;
+  setGameError: Dispatch<SetStateAction<string | null>>;
+  setIsConnected: Dispatch<SetStateAction<boolean>>;
   navigate: (path: string) => void;
   user: {
     id: string;
     username: string;
   };
+  toast: ToastContext;
 }
 
 export interface UserEventHandlers {
-  setOnlineUsers: React.Dispatch<React.SetStateAction<OnlineUser[]>>;
-  setCurrentSession: React.Dispatch<React.SetStateAction<UserSession | null>>;
+  setOnlineUsers: Dispatch<SetStateAction<OnlineUser[]>>;
+  setCurrentSession: Dispatch<SetStateAction<UserSession | null>>;
   user: {
     id: string;
     username: string;
   };
+  toast: ToastContext;
 }
 
 export interface GameRoom {
