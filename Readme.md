@@ -10,10 +10,8 @@ This is a full-stack Tic Tac Toe web application built using modern web technolo
 - Players can:
   - **Create rooms** to host games.
   - **Join rooms** using a unique room code for multiplayer gameplay.
-- Frontend created with **React**, **TypeScript**, and **Vite** for fast development and optimized builds.
-- Styling powered by **Tailwind CSS** for a modern and responsive design.
-- Clean and responsive UI for seamless gameplay on various devices.
-- Modern development practices leveraging TypeScript for type safety and maintainability.
+- Modern development practices leveraging TypeScript + Socket.io for real-time communication.
+- Clean UI for seamless gameplay on various devices.
 
 ---
 
