@@ -67,7 +67,7 @@ This is a full-stack Tic Tac Toe web application built using modern web technolo
 
    ```env
    # Server configuration
-   PORT=5000
+   PORT=3000
    JWT_SECRET=your_jwt_secret_key
 
    # Database configuration
