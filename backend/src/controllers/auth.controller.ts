@@ -48,28 +48,5 @@ export class AuthController {
       res.status(500).json({ message: "Internal server error" });
     }
   }
-  static async getProfile(req: Request, res: Response): Promise<void> {
-    try {
-      if (!req["currentUser"]) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
 
-      // Generate a new JWT token
-      const newToken = encrypt.generateToken({ id: req["currentUser"].id });
-
-      // Remove password from user object before sending response
-      const { password: _, ...userWithoutPassword } = req["currentUser"];
-
-      res.status(200).json({
-        success: true,
-        message: "Profile retrieved successfully",
-        user: userWithoutPassword,
-        token: newToken,
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  }
 }

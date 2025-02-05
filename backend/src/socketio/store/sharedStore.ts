@@ -5,12 +5,7 @@ export class SharedStore {
   private users: Map<string, ConnectedUser> = new Map();
   private games: Map<string, GameRoom> = new Map();
 
-  private constructor() {
-    setInterval(() => {
-      console.log("@@@ current games status");
-      console.log(this.games);
-    }, 2000);
-  }
+  private constructor() {}
 
   static getInstance(): SharedStore {
     if (!SharedStore.instance) {

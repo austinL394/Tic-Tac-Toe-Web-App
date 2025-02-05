@@ -1,37 +1,48 @@
 interface GameStatusProps {
-  status: 'waiting' | 'playing' | 'finished';
+  status: string;
   playersCount: number;
   isMyTurn: boolean;
-  winner?: string | 'draw';
+  winner?: string;
   currentUserId?: string;
+  onRequestRematch?: () => void;
+  showRematchButton?: boolean;
 }
 
-const GameStatus = ({ status, playersCount, isMyTurn, winner, currentUserId }: GameStatusProps) => {
-  if (status === 'waiting') {
-    return (
-      <div className="absolute mt-80 p-4 bg-gray-800 rounded-lg text-center text-gray-400 w-64">
-        {playersCount < 2 ? 'Waiting for another player to join...' : 'Waiting for all players to be ready...'}
-      </div>
-    );
-  }
+const GameStatus = ({
+  status,
+  playersCount,
+  isMyTurn,
+  winner,
+  currentUserId,
+  onRequestRematch,
+  showRematchButton,
+}: GameStatusProps) => {
+  const getStatusMessage = () => {
+    if (status === 'waiting') {
+      return playersCount === 1 ? 'Waiting for opponent...' : 'Waiting for players to ready up...';
+    }
 
-  if (status === 'playing') {
-    return (
-      <div className="absolute mt-80 mb-64">
-        <p className="text-white text-center">{isMyTurn ? 'Your turn!' : "Opponent's turn"}</p>
-      </div>
-    );
-  }
+    if (status === 'finished') {
+      if (winner === 'draw') return "It's a draw!";
+      return winner === currentUserId ? 'You won!' : 'You lost!';
+    }
 
-  if (status === 'finished') {
-    return (
-      <div className="absolute mt-80 p-4 bg-gray-800 rounded-lg text-center text-white w-64">
-        {winner === currentUserId ? '🎉 You won!' : winner === 'draw' ? "It's a draw!" : '😔 You lost!'}
-      </div>
-    );
-  }
+    return isMyTurn ? 'Your turn!' : "Opponent's turn...";
+  };
 
-  return null;
+  return (
+    <div className="mb-8 text-center">
+      <h2 className="text-xl font-semibold text-white mb-2">{getStatusMessage()}</h2>
+      {status === 'finished' && showRematchButton && (
+        <button
+          onClick={onRequestRematch}
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+        >
+          Request Rematch
+        </button>
+      )}
+    </div>
+  );
 };
 
 export default GameStatus;

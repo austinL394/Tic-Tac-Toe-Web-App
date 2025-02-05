@@ -212,8 +212,10 @@ export class GameService extends BaseService {
     const gameRoom = this.store.getGameRoom(roomId);
     if (!gameRoom || gameRoom.status !== "finished") return;
 
+
     const player = gameRoom.players[userId];
     if (!player) return;
+
 
     player.ready = true;
 

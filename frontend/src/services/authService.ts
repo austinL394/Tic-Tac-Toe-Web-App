@@ -50,18 +50,4 @@ export const authService = {
       throw error;
     }
   },
-
-  async checkAuthStatus() {
-    try {
-      const response = await api.get<AuthResponse>('/auth/check');
-      if (response.data.success) {
-        useAuthStore.getState().login(response.data.user, response.data.token);
-        return response.data;
-      } else {
-        throw new Error('Authentication failed');
-      }
-    } catch (error) {
-      throw error;
-    }
-  },
 };

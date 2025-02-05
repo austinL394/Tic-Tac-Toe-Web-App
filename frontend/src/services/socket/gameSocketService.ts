@@ -31,6 +31,6 @@ export class GameSocketService extends BaseSocketService {
   }
 
   requestRematch(roomId: string) {
-    this.socket.emit('game:request_rematch', { roomId });
+    this.socket.emit('game:request_rematch', roomId);
   }
 }

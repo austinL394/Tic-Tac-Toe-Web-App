@@ -1,4 +1,5 @@
 import { Socket } from 'socket.io-client';
+
 import { OnlineUser, UserEventHandlers, UserStatus } from '@/types';
 
 export const setupUserEvents = (socket: Socket, { setOnlineUsers, setCurrentSession, user }: UserEventHandlers) => {

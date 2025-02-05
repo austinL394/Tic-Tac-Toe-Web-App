@@ -8,7 +8,7 @@ import GameStatus from './components/GameStatus';
 
 const GameRoom = () => {
   const { roomId } = useParams();
-  const { currentRoom, leaveRoom, toggleReady, makeMove } = useSocket();
+  const { currentRoom, leaveRoom, toggleReady, makeMove, requestRematch } = useSocket();
   const { currentSession } = useSocket();
   const navigate = useNavigate();
 
@@ -26,6 +26,12 @@ const GameRoom = () => {
   const handleCellClick = (position: number) => {
     if (currentRoom?.status === 'playing' && isMyTurn && !currentRoom.board[position]) {
       makeMove(position);
+    }
+  };
+
+  const handleRematchRequest = () => {
+    if (currentRoom?.id) {
+      requestRematch();
     }
   };
 
@@ -70,6 +76,8 @@ const GameRoom = () => {
                 isMyTurn={isMyTurn}
                 winner={currentRoom.winner}
                 currentUserId={currentSession?.userId}
+                onRequestRematch={handleRematchRequest}
+                showRematchButton={currentRoom.status === 'finished'}
               />
 
               <GameBoard

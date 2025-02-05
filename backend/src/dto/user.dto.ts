@@ -1,5 +1,3 @@
-// src/dto/user.dto.ts
-
 export interface payload {
   id: string | number;
 }

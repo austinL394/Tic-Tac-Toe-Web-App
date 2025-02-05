@@ -8,14 +8,11 @@ import { ServiceRegistry } from "../serviceRegistry";
 import { GameService } from "./gameService";
 
 export class UserService extends BaseService {
-  private readonly sessionTimeout: number = 1000 * 60 * 30;
-  private readonly autoAwayTimeout: number = 1000 * 60 * 5;
   private gameService: GameService;
 
   constructor(io: SocketIOServer) {
     super(io, "userService");
     this.store = SharedStore.getInstance();
-    this.startSessionMonitoring();
   }
 
   setupEvents(socket: Socket) {
@@ -32,8 +29,8 @@ export class UserService extends BaseService {
     });
 
     socket.on("disconnect", () => {
-      this.disconnectUser(userId);
       console.log(`User disconnected: ${socket.data.username}`);
+      this.disconnectUser(userId);
     });
   }
 
@@ -54,23 +51,6 @@ export class UserService extends BaseService {
     await this.updateUserStatus(userId, UserStatus.ONLINE);
   }
 
-  private startSessionMonitoring() {
-    setInterval(() => {
-      const now = new Date();
-      this.store.getAllUsers().forEach((user) => {
-        const timeDiff = now.getTime() - user.lastActive.getTime();
-        if (timeDiff > this.sessionTimeout) {
-          this.disconnectUser(user.userId);
-        } else if (
-          timeDiff > this.autoAwayTimeout &&
-          user.status === UserStatus.ONLINE
-        ) {
-          this.updateUserStatus(user.userId, UserStatus.BUSY);
-        }
-      });
-    }, 30000);
-  }
-
   public async updateUserStatus(userId: string, status: UserStatus) {
     const user = this.store.getUser(userId);
     if (user) {
@@ -79,7 +59,6 @@ export class UserService extends BaseService {
         lastActive: new Date(),
       });
 
-      this.io.emit("user:status_changed", { userId, status });
       this.broadcastUserList();
     }
   }

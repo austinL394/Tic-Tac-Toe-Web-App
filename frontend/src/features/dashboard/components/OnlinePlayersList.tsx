@@ -22,10 +22,6 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOp
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<UserStatus>(UserStatus.ONLINE);
 
-  const handleChallenge = (playerId: string) => {
-    // sendMessage('challenge_request', { challengedUserId: playerId });
-  };
-
   const handleStatusChange = (status: UserStatus) => {
     setCurrentStatus(status);
     setIsStatusDropdownOpen(false);
@@ -124,19 +120,6 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOp
                     </div>
                     <StatusIndicator status={player.status} />
                   </div>
-                  {player.userId !== authUser!.id && (
-                    <button
-                      className={classNames(
-                        'w-full mt-2 px-3 py-1 text-white text-sm rounded-lg transition-colors',
-                        'bg-indigo-600 hover:bg-indigo-700',
-                        'disabled:opacity-50 disabled:cursor-not-allowed',
-                      )}
-                      disabled={player?.status === 'in-game'}
-                      onClick={() => handleChallenge(player.userId)}
-                    >
-                      Challenge
-                    </button>
-                  )}
                 </div>
               ))}
           </div>

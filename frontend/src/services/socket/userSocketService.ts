@@ -7,7 +7,7 @@ export class UserSocketService extends BaseSocketService {
     super(socket);
   }
 
-  updateStatus(status: UserStatus) {
+  updateUserStatus(status: UserStatus) {
     this.socket.emit('user:status_update', { status });
   }
 }

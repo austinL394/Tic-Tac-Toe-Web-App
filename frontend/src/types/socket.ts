@@ -1,5 +1,4 @@
 import { Dispatch, SetStateAction } from 'react';
-import { Toast } from 'react-hot-toast';
 import { Socket } from 'socket.io-client';
 
 export enum UserStatus {
@@ -39,6 +38,7 @@ export interface SocketContextType {
   leaveRoom: (roomId: string) => void;
   toggleReady: (roomId: string) => void;
   makeMove: (position: number) => void;
+  requestRematch: () => void;
 }
 
 interface ToastContext {

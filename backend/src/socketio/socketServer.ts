@@ -1,6 +1,6 @@
 import { Server as SocketIOServer } from "socket.io";
 import { ConnectedUser, UserStatus } from "../types";
-import { AuthMiddleware } from "./middleware/authMiddleware";
+import { AuthMiddleware } from "./middleware/auth-middleware";
 import { UserService } from "./services/userService";
 
 import * as dotenv from "dotenv";

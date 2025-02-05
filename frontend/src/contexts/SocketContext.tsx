@@ -3,19 +3,19 @@ import { io, Socket } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 
-import { setupUserEvents } from '@/services/socket/userEvents';
-import { setupGameEvents } from '@/services/socket/gameEvents';
-import { SocketService } from '@/services/socket/socketService';
+import { setupUserEvents } from '@/services/socket/events/userEvents';
+import { setupGameEvents } from '@/services/socket/events/gameEvents';
 
 import { SocketContextType, OnlineUser, UserSession, UserStatus, GameRoom } from '@/types';
 import { useToast } from './ToastrContext';
+import { MainSocketService } from '@/services/socket/mainSocketService';
 
 export const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
   const socketRef = useRef<Socket | null>(null);
-  const socketService = useRef<SocketService | null>(null);
+  const socketService = useRef<MainSocketService | null>(null);
   const toast = useToast();
   const logout = useAuthStore((store) => store.logout);
 
@@ -40,7 +40,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
 
     socketRef.current = socket;
-    socketService.current = new SocketService(socket);
+    socketService.current = new MainSocketService(socket);
 
     const handlers = {
       setOnlineUsers,
@@ -97,13 +97,14 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setRooms([]);
       setCurrentRoom(null);
       setGameError(null);
+      navigate("/");
       toast.showWarning('Disconnected from server');
     });
 
     // Auto-away feature
     const autoAwayTimeout = setTimeout(() => {
       if (currentSession?.status === UserStatus.ONLINE) {
-        socketService.current?.updateUserStatus(UserStatus.BUSY);
+        socketService.current?.user.updateUserStatus(UserStatus.BUSY);
       }
     }, 300000); // 5 minutes
 
@@ -153,13 +154,14 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     gameError,
     connect,
     disconnect,
-    updateUserStatus: (status) => socketService.current?.updateUserStatus(status),
-    createRoom: () => socketService.current?.createRoom(),
-    getRoomList: () => socketService.current?.getRoomList(),
-    joinRoom: (roomId) => socketService.current?.joinRoom(roomId),
-    leaveRoom: (roomId) => socketService.current?.leaveRoom(roomId),
-    toggleReady: (roomId) => socketService.current?.toggleReady(roomId),
-    makeMove: (position) => currentRoom && socketService.current?.makeMove(currentRoom.id, position),
+    updateUserStatus: (status) => socketService.current?.user.updateUserStatus(status),
+    createRoom: () => socketService.current?.game.createRoom(),
+    getRoomList: () => socketService.current?.game.getRoomList(),
+    joinRoom: (roomId) => socketService.current?.game.joinRoom(roomId),
+    leaveRoom: (roomId) => socketService.current?.game.leaveRoom(roomId),
+    toggleReady: (roomId) => socketService.current?.game.toggleReady(roomId),
+    makeMove: (position) => currentRoom && socketService.current?.game.makeMove(currentRoom.id, position),
+    requestRematch: () => currentRoom && socketService.current?.game.requestRematch(currentRoom.id),
   };
 
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
