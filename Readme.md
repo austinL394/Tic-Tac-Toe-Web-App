@@ -39,10 +39,10 @@ This is a full-stack Tic Tac Toe web application built using modern web technolo
 
 ## Prerequisites
 
-- **Node.js** (v14 or newer)
+- **Node.js** (v18 or newer)
 - **npm** or **yarn**
 - **PostgreSQL** (with a running instance)
-- Modern web browser
+- Modern web browser (e.g. Chrome)
 
 ---
 
@@ -53,7 +53,7 @@ This is a full-stack Tic Tac Toe web application built using modern web technolo
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-repo/tic-tac-toe-webapp.git
+   https://github.com/austinL394/Tic-Tac-Toe-Web-App.git
    cd tic-tac-toe-webapp/backend
    ```
 
