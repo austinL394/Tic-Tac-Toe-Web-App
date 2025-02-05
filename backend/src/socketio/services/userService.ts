@@ -27,7 +27,7 @@ export class UserService extends BaseService {
     });
 
     socket.on("disconnect", () => {
-      console.log(`User disconnected: ${socket.data.username}`);
+      this.log(`User disconnected: ${socket.data.username}`);
       this.disconnectUser(userId);
     });
   }
@@ -52,7 +52,7 @@ export class UserService extends BaseService {
       lastActive: new Date(),
     });
 
-    console.log("User connected:", username);
+    this.log("User connected:", username);
     await this.updateUserStatus(userId, UserStatus.ONLINE);
   }
 

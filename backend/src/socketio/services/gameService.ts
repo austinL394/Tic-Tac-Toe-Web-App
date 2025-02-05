@@ -168,7 +168,7 @@ export class GameService extends BaseService {
         });
         this.store.setGameRoom(roomId, gameRoom);
       } catch (updateError) {
-        console.error(`Room state update failed during join`, {
+        this.error(`Room state update failed during join`, {
           error: updateError,
           roomId,
           userId,

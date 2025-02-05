@@ -3,7 +3,7 @@ import { SharedStore } from "../store/sharedStore";
 
 /**
  * Base service class for creating socket-based services
- * 
+ *
  * @description
  * - Provides common logging and store management functionality
  * - Serves as an abstract base for specific service implementations
@@ -25,10 +25,10 @@ export abstract class BaseService {
 
   /**
    * Logs informational messages with service context
-   * 
+   *
    * @param message - Primary log message
    * @param args - Optional additional log arguments
-   * 
+   *
    * @description
    * - Prefixes log message with service name
    * - Supports additional log arguments
@@ -39,10 +39,10 @@ export abstract class BaseService {
 
   /**
    * Logs error messages with service context
-   * 
+   *
    * @param message - Error message
    * @param args - Optional additional error details
-   * 
+   *
    * @description
    * - Prefixes error message with service name
    * - Supports additional error logging arguments

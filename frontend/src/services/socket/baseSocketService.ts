@@ -10,8 +10,4 @@ export class BaseSocketService {
   disconnect() {
     this.socket.disconnect();
   }
-
-  sendHeartbeat() {
-    this.socket.emit('heartbeat');
-  }
 }
