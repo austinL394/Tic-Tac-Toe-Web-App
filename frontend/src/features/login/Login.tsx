@@ -14,6 +14,7 @@ export const Login = () => {
   const from = (location.state as any)?.from?.pathname || '/dashboard';
   const isLoading = useAuthStore((state) => state.isLoading);
   const login = useAuthStore((state) => state.login);
+  const setLoading = useAuthStore((state) => state.setLoading);
 
   const {
     register,
@@ -24,6 +25,7 @@ export const Login = () => {
 
   const onSubmit = async (data: FormInputs) => {
     try {
+      setLoading(true);
       const { user, token } = await authService.login(data);
       login(user, token);
 
@@ -33,6 +35,8 @@ export const Login = () => {
         type: 'manual',
         message: error.response?.data?.message || 'Invalid credentials',
       });
+    } finally {
+      setLoading(false);
     }
   };
 

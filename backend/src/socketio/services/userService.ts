@@ -4,20 +4,18 @@ import { BaseService } from "./baseService";
 import { SharedStore } from "../store/sharedStore";
 
 import { UserStatus } from "../../types";
-import { ServiceRegistry } from "../serviceRegistry";
-import { GameService } from "./gameService";
 
+/**
+ * UserService manages user-related socket events and interactions
+ * Handles user connection, status updates, heartbeats, and disconnections
+ */
 export class UserService extends BaseService {
-  private gameService: GameService;
-
   constructor(io: SocketIOServer) {
     super(io, "userService");
     this.store = SharedStore.getInstance();
   }
 
   setupEvents(socket: Socket) {
-    this.gameService =
-      ServiceRegistry.getInstance().get<GameService>("gameService");
     const userId = socket.data.userId;
 
     socket.on("user:status_update", ({ status }: { status: UserStatus }) => {
@@ -34,6 +32,13 @@ export class UserService extends BaseService {
     });
   }
 
+  /**
+   * Handles new user connection
+   * Adds user to the shared store and sets initial online status
+   *
+   * @param {Socket} socket - The newly connected socket
+   * @returns {Promise<void>}
+   */
   async handleConnection(socket: Socket) {
     const { userId, username, firstName, lastName } = socket.data;
 
@@ -51,6 +56,14 @@ export class UserService extends BaseService {
     await this.updateUserStatus(userId, UserStatus.ONLINE);
   }
 
+  /**
+   * Updates a user's status in the shared store
+   * Broadcasts updated user list after status change
+   *
+   * @param {string} userId - Unique identifier of the user
+   * @param {UserStatus} status - New status for the user
+   * @returns {Promise<void>}
+   */
   public async updateUserStatus(userId: string, status: UserStatus) {
     const user = this.store.getUser(userId);
     if (user) {
@@ -63,6 +76,12 @@ export class UserService extends BaseService {
     }
   }
 
+  /**
+   * Updates user's last active timestamp on heartbeat
+   * Prevents updating for users in-game
+   *
+   * @param {string} userId - Unique identifier of the user
+   */
   private updateUserHeartbeat(userId: string) {
     const user = this.store.getUser(userId);
     if (user && user.status !== UserStatus.INGAME) {
@@ -72,6 +91,13 @@ export class UserService extends BaseService {
     }
   }
 
+  /**
+   * Handles user disconnection
+   * Removes user from store and broadcasts updated user list
+   *
+   * @param {string} userId - Unique identifier of the user
+   * @returns {Promise<void>}
+   */
   private async disconnectUser(userId: string) {
     const user = this.store.getUser(userId);
     if (user) {
@@ -85,6 +111,10 @@ export class UserService extends BaseService {
     }
   }
 
+  /**
+   * Broadcasts the current list of users to all connected clients
+   * Triggered after user list modifications
+   */
   protected broadcastUserList() {
     this.io.emit("user_list_update", this.store.getAllUsers());
   }

@@ -1,24 +1,26 @@
-import { AppDataSource } from "./data-source";
 import * as express from "express";
-import * as dotenv from "dotenv";
 import { Request, Response } from "express";
-import { userRouter } from "./routes/user.routes";
-import { errorHandler } from "./middleware/error-middleware";
-import "reflect-metadata";
+import * as cors from "cors";
+
 import { Server } from "socket.io";
+import * as dotenv from "dotenv";
+
+import { AppDataSource } from "./data-source";
+import { userRouter } from "./routes/user.routes";
+
+import { errorHandler } from "./middleware/error-middleware";
+
 import SocketService from "./socketio/socketServer";
 
-import * as cors from "cors"; // Import cors
-
 dotenv.config();
+const PORT = process.env.PORT || 3000; // Moved PORT definition before usage
 
 // Database connection and server start
 AppDataSource.initialize()
   .then(async () => {
-    var app = require("express")();
-    var http = require("http").Server(app);
-    // var io = require("socket.io")(http);
-    var io = new Server(http, {
+    const app = require("express")();
+    const http = require("http").Server(app);
+    const io = new Server(http, {
       cors: {
         origin: "*", // Allow all origins temporarily
         methods: ["GET", "POST"],
@@ -64,5 +66,3 @@ AppDataSource.initialize()
     console.error("Error during Data Source initialization:", error);
     process.exit(1); // Exit process with failure
   });
-
-const PORT = process.env.PORT || 3000; // Moved PORT definition before usage

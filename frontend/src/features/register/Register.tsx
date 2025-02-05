@@ -15,6 +15,7 @@ type FormInputs = {
 const Register = () => {
   const navigate = useNavigate();
   const isLoading = useAuthStore((state) => state.isLoading);
+  const setLoading = useAuthStore((state) => state.setLoading);
 
   const {
     register,
@@ -33,6 +34,8 @@ const Register = () => {
       return;
     }
 
+    setLoading(true);
+
     try {
       await authService.register({
         firstName: data.firstName,
@@ -48,6 +51,8 @@ const Register = () => {
         type: 'manual',
         message: error.response?.data?.message || error.message || 'Registration failed',
       });
+    } finally {
+      setLoading(false);
     }
   };
 

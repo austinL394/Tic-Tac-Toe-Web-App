@@ -1,5 +1,4 @@
 import { Server as SocketIOServer } from "socket.io";
-import { ConnectedUser, UserStatus } from "../types";
 import { AuthMiddleware } from "./middleware/auth-middleware";
 import { UserService } from "./services/userService";
 
@@ -16,6 +15,16 @@ export interface TokenPayload {
   username: string;
 }
 
+/**
+ * SocketServer: Central configuration and initialization for WebSocket server
+ * 
+ * Key Responsibilities:
+ * - Socket.IO server configuration
+ * - Authentication middleware setup
+ * - Service event registration
+ * - Connection lifecycle management
+ * 
+ */
 export class SocketServer {
   private io: SocketIOServer;
   private store: SharedStore;
@@ -42,25 +51,6 @@ export class SocketServer {
       this.userService.setupEvents(socket);
       this.gameService.setupEvents(socket);
     });
-  }
-
-  public getConnectedUsers(): ConnectedUser[] {
-    return this.store.getAllUsers();
-  }
-
-  public isUserConnected(userId: string): boolean {
-    return this.store.isUserConnected(userId);
-  }
-
-  public getUserStatus(userId: string): UserStatus | null {
-    return this.store.getUserStatus(userId);
-  }
-
-  public updateGameStatus(userId: string, inGame: boolean) {
-    this.userService.updateUserStatus(
-      userId,
-      inGame ? UserStatus.INGAME : UserStatus.ONLINE
-    );
   }
 }
 

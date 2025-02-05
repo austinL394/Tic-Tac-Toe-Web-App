@@ -1,5 +1,29 @@
 import { ConnectedUser, GameRoom, UserStatus } from "../../types";
 
+/**
+ * SharedStore: A Singleton class for managing connected users and game rooms
+ *
+ * Key Features:
+ * - Singleton pattern to ensure single global state
+ * - In-memory storage using Map for users and game rooms
+ * - CRUD operations for users and game rooms
+ *
+ * Methods Categories:
+ * 1. User Management Methods:
+ *    - addUser
+ *    - getUser
+ *    - updateUser
+ *    - removeUser
+ *    - getAllUsers
+ *    - isUserConnected
+ *    - getUserStatus
+ *
+ * 2. Game Room Management Methods:
+ *    - setGameRoom
+ *    - getGameRoom
+ *    - removeGameRoom
+ *    - getAllGameRooms
+ */
 export class SharedStore {
   private static instance: SharedStore;
   private users: Map<string, ConnectedUser> = new Map();

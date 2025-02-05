@@ -20,6 +20,6 @@ export class encrypt {
     if (!JWT_SECRET) {
       throw new Error("JWT_SECRET is not defined");
     }
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: 5000 });
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: 86400 });
   }
 }
