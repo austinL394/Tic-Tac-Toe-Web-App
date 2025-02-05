@@ -3,14 +3,11 @@ import classNames from 'classnames';
 
 import CloseIcon from '@/components/Icons/CloseIcon';
 import ArrwDown from '@/components/Icons/ArrowDownIcon';
-
 import { useSocket } from '@/hooks/useSocket';
-
 import StatusIndicator from './StatusIndicator';
-
 import { useAuthStore } from '@/stores/authStore';
-
 import { UserStatus } from '@/types';
+
 interface OnlinePlayersListProps {
   isDrawerOpen: boolean;
   onClose: () => void;
@@ -19,6 +16,7 @@ interface OnlinePlayersListProps {
 export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOpen, onClose }) => {
   const { onlineUsers, updateUserStatus } = useSocket();
   const authUser = useAuthStore((store) => store.user);
+  const logout = useAuthStore((store) => store.logout);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<UserStatus>(UserStatus.ONLINE);
 
@@ -26,6 +24,11 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOp
     setCurrentStatus(status);
     setIsStatusDropdownOpen(false);
     updateUserStatus(status);
+  };
+
+  const handleLogout = () => {
+    logout();
+    onClose();
   };
 
   return (
@@ -97,6 +100,20 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOp
                 )}
               </div>
             </div>
+
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="mt-3 w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors flex items-center justify-center gap-2"
+            >
+              <span className="font-medium">Logout</span>
+              {/* Simple arrow icon using pure CSS */}
+              <span className="transform rotate-180 inline-block">
+                <span className="block w-4 h-4 relative">
+                  <span className="absolute inset-0 border-t-2 border-r-2 border-white transform rotate-45 translate-y-1/2 w-2 h-2"></span>
+                </span>
+              </span>
+            </button>
           </div>
 
           {/* Online Players Section */}
@@ -128,3 +145,5 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOp
     </>
   );
 };
+
+export default OnlinePlayersList;

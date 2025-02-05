@@ -71,6 +71,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       socket.on('disconnect', () => {
         clearInterval(heartbeatInterval);
+        navigate('/dashboard');
       });
     });
 
@@ -97,7 +98,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setRooms([]);
       setCurrentRoom(null);
       setGameError(null);
-      navigate("/");
+      navigate('/');
       toast.showWarning('Disconnected from server');
     });
 

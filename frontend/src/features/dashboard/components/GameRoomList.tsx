@@ -84,17 +84,15 @@ const GameRoomList: React.FC<GameRoomListProps> = ({ rooms, onJoinRoom, currentU
                 <div key={playerId}>
                   <div className="flex items-center gap-3">
                     <div
-                      className={classNames(
-                        'w-8 h-8 rounded-full flex items-center justify-center',
-                        playerId === 'waiting' ? 'bg-gray-700 text-gray-400' : 'bg-indigo-900 text-indigo-100',
-                      )}
+                      className={classNames('w-8 h-8 rounded-full flex items-center justify-center', {
+                        'bg-gray-700 text-gray-400': playerId === 'waiting',
+                        'bg-indigo-900 text-indigo-100': playerId !== 'waiting',
+                      })}
                     >
                       {player.username.charAt(0)}
                     </div>
                     <div className="flex flex-col">
-                      <span className={classNames(playerId === 'waiting' ? 'text-gray-400' : 'text-white')}>
-                        {player.username}
-                      </span>
+                      <span className={playerId === 'waiting' ? 'text-gray-400' : 'text-white'}>{player.username}</span>
                       <span className="text-xs text-gray-500">
                         {player.symbol}
                         {room.hostId === playerId && ' • Host'}
