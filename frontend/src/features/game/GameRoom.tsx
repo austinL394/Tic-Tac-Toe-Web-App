@@ -8,18 +8,21 @@ import GameStatus from './components/GameStatus';
 
 const GameRoom = () => {
   const { roomId } = useParams();
-  const { currentRoom, leaveRoom, toggleReady, makeMove, requestRematch } = useSocket();
+  const { currentRoom, joinRoom, isConnected, leaveRoom, toggleReady, makeMove, requestRematch } = useSocket();
   const { currentSession } = useSocket();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!currentRoom && roomId && isConnected) {
+      joinRoom(roomId);
+    }
     return () => {
       if (currentRoom?.id) {
         leaveRoom(currentRoom.id);
         navigate('/');
       }
     };
-  }, []);
+  }, [isConnected]);
 
   const isMyTurn = currentRoom?.currentTurn === currentSession?.userId;
 
