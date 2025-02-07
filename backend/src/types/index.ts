@@ -5,7 +5,7 @@ export enum UserStatus {
 }
 
 export interface ConnectedUser {
-  socketId: string;
+  socketIds: string[];
   userId: string;
   firstName: string;
   lastName: string;

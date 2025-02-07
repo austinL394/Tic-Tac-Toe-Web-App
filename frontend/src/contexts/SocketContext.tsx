@@ -116,6 +116,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       socket.off('connect');
       socket.off('connect_error');
       socket.off('disconnect');
+      socket.disconnect();
     };
   }, [isAuthenticated, token, user, navigate, toast]);
 

@@ -363,7 +363,10 @@ export class GameService extends BaseService {
   private handleLeaveRoom(socket: Socket, userId: string, roomId: string) {
     try {
       const gameRoom = this.store.getGameRoom(roomId);
-      if (!gameRoom) return;
+      if (!gameRoom) {
+        socket.emit("game:room_left");
+        return;
+      }
 
       delete gameRoom.players[userId];
       socket.leave(roomId);

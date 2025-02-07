@@ -8,7 +8,6 @@ import MinusIcon from '@/components/Icons/MinusIcon';
 
 import { useSocket } from '@/hooks/useSocket';
 import GameRoomList from './components/GameRoomList';
-import toast from 'react-hot-toast';
 
 const Dashboard = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);

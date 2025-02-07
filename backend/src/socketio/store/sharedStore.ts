@@ -62,7 +62,8 @@ export class SharedStore {
   }
 
   isUserConnected(userId: string): boolean {
-    return this.users.has(userId);
+    const user = this.users.get(userId);
+    return user !== undefined && user.socketIds.length > 0;
   }
 
   getUserStatus(userId: string): UserStatus | null {

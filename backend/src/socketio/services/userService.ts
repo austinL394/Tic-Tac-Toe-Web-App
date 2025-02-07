@@ -27,8 +27,8 @@ export class UserService extends BaseService {
     });
 
     socket.on("disconnect", () => {
-      this.log(`User disconnected: ${socket.data.username}`);
-      this.disconnectUser(userId);
+      this.log(`Socket disconnected: ${socket.data.username}`);
+      this.handleSocketDisconnect(userId, socket.id);
     });
   }
 
@@ -41,18 +41,28 @@ export class UserService extends BaseService {
    */
   async handleConnection(socket: Socket) {
     const { userId, username, firstName, lastName } = socket.data;
+    const existingUser = this.store.getUser(userId);
 
-    this.store.addUser({
-      socketId: socket.id,
-      firstName,
-      lastName,
-      userId,
-      username,
-      status: UserStatus.ONLINE,
-      lastActive: new Date(),
-    });
+    if (existingUser) {
+      // User exists, add new socket ID to their socketIds array
+      this.store.updateUser(userId, {
+        socketIds: [...existingUser.socketIds, socket.id],
+        lastActive: new Date(),
+      });
+    } else {
+      // New user, create with initial socket ID
+      this.store.addUser({
+        socketIds: [socket.id],
+        firstName,
+        lastName,
+        userId,
+        username,
+        status: UserStatus.ONLINE,
+        lastActive: new Date(),
+      });
+    }
 
-    this.log("User connected:", username);
+    this.log("Socket connected for user:", username);
     await this.updateUserStatus(userId, UserStatus.ONLINE);
   }
 
@@ -98,17 +108,24 @@ export class UserService extends BaseService {
    * @param {string} userId - Unique identifier of the user
    * @returns {Promise<void>}
    */
-  private async disconnectUser(userId: string) {
+  private async handleSocketDisconnect(userId: string, socketId: string) {
     const user = this.store.getUser(userId);
-    if (user) {
-      const socket = this.io.sockets.sockets.get(user.socketId);
-      if (socket) {
-        socket.disconnect(true);
-      }
+    if (!user) return;
 
+    // Remove the disconnected socket ID
+    const updatedSocketIds = user.socketIds.filter((id) => id !== socketId);
+
+    if (updatedSocketIds.length === 0) {
+      // No more active sockets for this user, remove them completely
       this.store.removeUser(userId);
-      this.broadcastUserList();
+    } else {
+      // Update the user with remaining socket IDs
+      this.store.updateUser(userId, {
+        socketIds: updatedSocketIds,
+      });
     }
+
+    this.broadcastUserList();
   }
 
   /**
