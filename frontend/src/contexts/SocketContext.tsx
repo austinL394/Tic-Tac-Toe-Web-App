@@ -28,6 +28,11 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const { isAuthenticated, token, user } = useAuthStore();
 
+  const logoutSession = () => {
+    disconnect();
+    logout();
+  };
+
   const connect = useCallback(() => {
     if (socketRef.current?.connected || !isAuthenticated || !token || !user) return;
 
@@ -52,6 +57,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       navigate,
       user,
       toast,
+      logoutSession,
     };
 
     socket.on('connect', () => {
@@ -164,6 +170,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     toggleReady: (roomId) => socketService.current?.game.toggleReady(roomId),
     makeMove: (position) => currentRoom && socketService.current?.game.makeMove(currentRoom.id, position),
     requestRematch: () => currentRoom && socketService.current?.game.requestRematch(currentRoom.id),
+    logoutSocketSession: () => socketService.current?.user.logout(),
   };
 
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;

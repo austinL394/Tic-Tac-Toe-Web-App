@@ -14,7 +14,7 @@ interface OnlinePlayersListProps {
 }
 
 export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOpen, onClose }) => {
-  const { onlineUsers, updateUserStatus } = useSocket();
+  const { onlineUsers, updateUserStatus, logoutSocketSession } = useSocket();
   const authUser = useAuthStore((store) => store.user);
   const logout = useAuthStore((store) => store.logout);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
@@ -28,6 +28,7 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({ isDrawerOp
 
   const handleLogout = () => {
     logout();
+    logoutSocketSession();
     onClose();
   };
 

@@ -19,7 +19,7 @@ const GameRoom = () => {
     return () => {
       if (currentRoom?.id) {
         leaveRoom(currentRoom.id);
-        navigate('/');
+        navigate('/dashboard');
       }
     };
   }, [isConnected]);

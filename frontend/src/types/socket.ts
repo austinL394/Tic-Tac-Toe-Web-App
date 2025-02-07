@@ -39,6 +39,7 @@ export interface SocketContextType {
   toggleReady: (roomId: string) => void;
   makeMove: (position: number) => void;
   requestRematch: () => void;
+  logoutSocketSession: () => void;
 }
 
 interface ToastContext {
@@ -71,6 +72,7 @@ export interface UserEventHandlers {
     username: string;
   };
   toast: ToastContext;
+  logoutSession: () => void;
 }
 
 export interface GameRoom {

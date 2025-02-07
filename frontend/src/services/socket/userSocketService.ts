@@ -10,4 +10,8 @@ export class UserSocketService extends BaseSocketService {
   updateUserStatus(status: UserStatus) {
     this.socket.emit('user:status_update', { status });
   }
+
+  logout() {
+    this.socket.emit('user:logout');
+  }
 }

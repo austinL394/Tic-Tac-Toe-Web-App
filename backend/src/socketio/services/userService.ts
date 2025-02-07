@@ -4,12 +4,16 @@ import { BaseService } from "./baseService";
 import { SharedStore } from "../store/sharedStore";
 
 import { UserStatus } from "../../types";
+import { GameService } from "./gameService";
+import { ServiceRegistry } from "../serviceRegistry";
 
 /**
  * UserService manages user-related socket events and interactions
  * Handles user connection, status updates, heartbeats, and disconnections
  */
 export class UserService extends BaseService {
+  private gameService: GameService;
+
   constructor(io: SocketIOServer) {
     super(io, "userService");
     this.store = SharedStore.getInstance();
@@ -17,6 +21,7 @@ export class UserService extends BaseService {
 
   setupEvents(socket: Socket) {
     const userId = socket.data.userId;
+    this.gameService = ServiceRegistry.getInstance().get("gameService");
 
     socket.on("user:status_update", ({ status }: { status: UserStatus }) => {
       this.updateUserStatus(userId, status);
@@ -29,6 +34,10 @@ export class UserService extends BaseService {
     socket.on("disconnect", () => {
       this.log(`Socket disconnected: ${socket.data.username}`);
       this.handleSocketDisconnect(userId, socket.id);
+    });
+
+    socket.on("user:logout", () => {
+      this.disconnectAllUserSockets(userId);
     });
   }
 
@@ -126,6 +135,23 @@ export class UserService extends BaseService {
     }
 
     this.broadcastUserList();
+  }
+
+  public async disconnectAllUserSockets(userId: string) {
+    const user = this.store.getUser(userId);
+    if (user) {
+      // Disconnect all sockets for this user
+      user.socketIds.forEach((socketId) => {
+        const socket = this.io.sockets.sockets.get(socketId);
+        if (socket) {
+          socket.emit("user:loggedout");
+          socket.disconnect(true);
+        }
+      });
+
+      this.store.removeUser(userId);
+      this.broadcastUserList();
+    }
   }
 
   /**

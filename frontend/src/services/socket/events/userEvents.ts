@@ -2,7 +2,10 @@ import { Socket } from 'socket.io-client';
 
 import { OnlineUser, UserEventHandlers, UserStatus } from '@/types';
 
-export const setupUserEvents = (socket: Socket, { setOnlineUsers, setCurrentSession, user }: UserEventHandlers) => {
+export const setupUserEvents = (
+  socket: Socket,
+  { setOnlineUsers, setCurrentSession, user, logoutSession }: UserEventHandlers,
+) => {
   socket.on('user_list_update', (users: OnlineUser[]) => {
     setOnlineUsers(users);
   });
@@ -15,6 +18,10 @@ export const setupUserEvents = (socket: Socket, { setOnlineUsers, setCurrentSess
     if (data.userId === user?.id) {
       setCurrentSession((prev) => (prev ? { ...prev, status: data.status, lastActivity: new Date() } : null));
     }
+  });
+
+  socket.on('user:loggedout', () => {
+    logoutSession();
   });
 
   return () => {

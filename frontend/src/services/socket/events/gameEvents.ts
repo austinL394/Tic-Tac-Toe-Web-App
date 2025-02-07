@@ -21,9 +21,14 @@ export const setupGameEvents = (
     toast.showSuccess(`Joined game room: ${room.id}`);
   });
 
+  socket.on('game:room_not_found', () => {
+    toast.showError(`Room not found`);
+    navigate('/dasboard');
+  });
+
   socket.on('game:room_left', () => {
     setCurrentRoom(null);
-    navigate('/');
+    navigate('/dashboard');
     toast.showInfo('Left game room');
   });
 
@@ -39,7 +44,7 @@ export const setupGameEvents = (
 
   socket.on('game:room_closed', () => {
     setCurrentRoom(null);
-    navigate('/');
+    navigate('/dashboard');
     toast.showWarning('Game room has been closed');
   });
 

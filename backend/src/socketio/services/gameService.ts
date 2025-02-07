@@ -3,6 +3,7 @@ import { Server as SocketIOServer, Socket } from "socket.io";
 
 import { BaseService } from "./baseService";
 import { GameRoom, MovePayload, UserStatus } from "../../types";
+import { SharedStore } from "../store/sharedStore";
 
 /**
  * GameService manages multiplayer Tic-Tac-Toe game interactions
@@ -22,9 +23,6 @@ export class GameService extends BaseService {
     );
     socket.on("game:room_leave", (roomId: string) =>
       this.handleLeaveRoom(socket, userId, roomId)
-    );
-    socket.on("game:get_room", (roomId: string) =>
-      this.handleGetRoom(socket, roomId)
     );
     socket.on("game:room_list", () => this.handleGetRoomList(socket));
     socket.on("game:toggle_ready", (roomId: string) =>
@@ -129,22 +127,33 @@ export class GameService extends BaseService {
       const user = this.store.getUser(userId);
 
       // Validate room and user existence
-      if (!gameRoom || !user) {
-        socket.emit("game:error", "Room not found");
+      if (!gameRoom) {
+        socket.emit("game:room_not_found");
         return;
       }
 
-      if (gameRoom.status !== "waiting") {
-        socket.emit("game:error", "Game already in progress");
+      if (!user) {
+        socket.emit("game:error", "User not found");
         return;
       }
 
-      if (Object.keys(gameRoom.players).length >= 2) {
-        socket.emit("game:error", "Room is full");
-        return;
+      const playerIds = Object.keys(gameRoom.players);
+
+      if (playerIds.length >= 2) {
+        if (playerIds.includes(userId)) {
+          socket.emit("game:warning", "You've already joined the room");
+        } else {
+          if (gameRoom.status === "waiting") {
+            socket.emit("game:error", "Room is full");
+          } else if (gameRoom.status === "playing") {
+            socket.emit("game:error", "Game already in progress");
+          }
+          return;
+        }
       }
 
       let symbol: "O" | "X" = "O";
+      let ready = gameRoom.players[user.userId]?.ready || false;
 
       if (gameRoom.hostId === user.userId) {
         socket.emit("game:error", "You are the host of the game room.");
@@ -157,7 +166,7 @@ export class GameService extends BaseService {
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
-        ready: false,
+        ready: ready,
       };
 
       try {
@@ -222,7 +231,7 @@ export class GameService extends BaseService {
       const gameRoom = this.store.getGameRoom(roomId);
 
       if (!gameRoom) {
-        socket.emit("game:error", "Room not found");
+        socket.emit("game:room_not_found");
         return;
       }
 
@@ -287,7 +296,11 @@ export class GameService extends BaseService {
    */
   private handleToggleReady(socket: Socket, userId: string, roomId: string) {
     const gameRoom = this.store.getGameRoom(roomId);
-    if (!gameRoom || !gameRoom.players[userId]) return;
+    if (!gameRoom) {
+      socket.emit("game:room_not_found");
+      return;
+    }
+    if (!gameRoom.players[userId]) return;
 
     gameRoom.players[userId].ready = !gameRoom.players[userId].ready;
 
@@ -326,7 +339,11 @@ export class GameService extends BaseService {
    */
   private handleRematchRequest(socket: Socket, userId: string, roomId: string) {
     const gameRoom = this.store.getGameRoom(roomId);
-    if (!gameRoom || gameRoom.status !== "finished") return;
+    if (!gameRoom) {
+      socket.emit("game:room_not_found");
+      return;
+    }
+    if (gameRoom.status !== "finished") return;
 
     const player = gameRoom.players[userId];
     if (!player) return;
@@ -337,7 +354,7 @@ export class GameService extends BaseService {
       (p) => p.ready
     );
     if (allPlayersReady) {
-      this.resetGame(roomId);
+      this.resetGame(socket, roomId);
     } else {
       this.store.setGameRoom(roomId, gameRoom);
       this.io.to(roomId).emit("game:room_state", gameRoom);
@@ -364,12 +381,11 @@ export class GameService extends BaseService {
     try {
       const gameRoom = this.store.getGameRoom(roomId);
       if (!gameRoom) {
-        socket.emit("game:room_left");
+        socket.emit("game:room_not_found");
         return;
       }
 
       delete gameRoom.players[userId];
-      socket.leave(roomId);
       this.store.updateUser(userId, { status: UserStatus.ONLINE });
 
       if (userId === gameRoom.hostId) {
@@ -387,33 +403,15 @@ export class GameService extends BaseService {
         this.io.to(roomId).emit("game:room_state", gameRoom);
       }
 
-      socket.emit("game:room_left");
+      const user = this.store.getUser(userId);
+      user.socketIds.forEach((socketId) => {
+        this.io.to(socketId).emit("game:room_left");
+        this.io.sockets.sockets.get(socketId).leave(roomId);
+      });
       this.broadcastRoomList();
     } catch (error) {
       this.error("Error leaving room:", error);
       socket.emit("game:error", "Failed to leave room");
-    }
-  }
-
-  /**
-   * Retrieves and sends the current state of a specific game room
-   *
-   * @param {Socket} socket - The client's active socket connection
-   * @param {string} roomId - Unique identifier of the game room to retrieve
-   *
-   * @returns {void}
-   *
-   * @description
-   * - Fetches game room state from store
-   * - Emits room state if found
-   * - Sends error if room does not exist
-   */
-  private handleGetRoom(socket: Socket, roomId: string) {
-    const gameRoom = this.store.getGameRoom(roomId);
-    if (gameRoom) {
-      socket.emit("game:room_state", gameRoom);
-    } else {
-      socket.emit("game:error", "Room not found");
     }
   }
 
@@ -448,7 +446,8 @@ export class GameService extends BaseService {
    */
   private handleDisconnect(socket: Socket, userId: string) {
     const room = this.findUserRoom(userId);
-    if (room) {
+    const user = SharedStore.getInstance().getUser(userId);
+    if (room && user.socketIds.length === 1) {
       this.handleLeaveRoom(socket, userId, room.id);
     }
   }
@@ -485,7 +484,7 @@ export class GameService extends BaseService {
 
   /**
    * Resets the game room to its initial state
-   *
+   * @param {string} socket - Socket Connection
    * @param {string} roomId - Unique identifier of the game room to reset
    *
    * @returns {void}
@@ -499,9 +498,12 @@ export class GameService extends BaseService {
    * - Broadcasts updated room state to all players
    * - Updates global room list
    */
-  private resetGame(roomId: string) {
+  private resetGame(socket: Socket, roomId: string) {
     const gameRoom = this.store.getGameRoom(roomId);
-    if (!gameRoom) return;
+    if (!gameRoom) {
+      socket.emit("game:room_not_found");
+      return;
+    }
 
     gameRoom.status = "waiting";
     gameRoom.board = Array(9).fill(null);
