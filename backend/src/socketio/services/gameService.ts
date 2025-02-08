@@ -447,7 +447,7 @@ export class GameService extends BaseService {
   private handleDisconnect(socket: Socket, userId: string) {
     const room = this.findUserRoom(userId);
     const user = SharedStore.getInstance().getUser(userId);
-    if (room && user.socketIds.length === 1) {
+    if (room && user && user.socketIds.length === 1) {
       this.handleLeaveRoom(socket, userId, room.id);
     }
   }
