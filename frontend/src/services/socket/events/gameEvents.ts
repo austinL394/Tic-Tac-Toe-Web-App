@@ -19,7 +19,6 @@ export const setupGameEvents = (
 
   socket.on('game:room_created', (room: GameRoom) => {
     setCurrentRoom(room);
-    console.log('@@@ current room updated withi', room);
     navigate(`/game/${room.id}`);
     toast.showSuccess('Game room created successfully');
   });
@@ -51,7 +50,6 @@ export const setupGameEvents = (
   });
 
   socket.on('game:room_state', (room: GameRoom) => {
-    console.log('@@ new game room state update', room.content);
     setCurrentRoom(room);
     setRooms((prevRooms) => prevRooms.map((r) => (r.id === room.id ? room : r)));
   });

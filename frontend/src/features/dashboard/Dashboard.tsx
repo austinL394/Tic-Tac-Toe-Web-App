@@ -31,7 +31,6 @@ const Dashboard = () => {
   const handleJoinRoomByName = () => {
     const roomName = prompt('Input room name:');
     const selectedRoom = rooms.find((room) => room.name === roomName);
-    console.log('@@@ rooms', rooms);
     if (selectedRoom) {
       requestJoinRoom(selectedRoom.id);
     } else toast.error("Room doesn't exist");
