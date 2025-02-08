@@ -8,13 +8,15 @@ import MinusIcon from '@/components/Icons/MinusIcon';
 
 import { useSocket } from '@/hooks/useSocket';
 import GameRoomList from './components/GameRoomList';
+import toast from 'react-hot-toast';
 
 const Dashboard = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const { createRoom, rooms, getRoomList, joinRoom, socket } = useSocket();
+  const { createRoom, rooms, getRoomList, joinRoom, socket, requestJoinRoom } = useSocket();
 
   const handleClickCreateRoom = () => {
-    createRoom();
+    const roomName = prompt('Input room name:');
+    createRoom(roomName!);
   };
 
   useEffect(() => {
@@ -22,7 +24,17 @@ const Dashboard = () => {
   }, [socket]);
 
   const handleJoinRoom = (roomId: string) => {
-    joinRoom(roomId);
+    // joinRoom(roomId);
+    requestJoinRoom(roomId);
+  };
+
+  const handleJoinRoomByName = () => {
+    const roomName = prompt('Input room name:');
+    const selectedRoom = rooms.find((room) => room.name === roomName);
+    console.log('@@@ rooms', rooms);
+    if (selectedRoom) {
+      requestJoinRoom(selectedRoom.id);
+    } else toast.error("Room doesn't exist");
   };
 
   return (
@@ -43,7 +55,14 @@ const Dashboard = () => {
           onClick={handleClickCreateRoom}
         >
           <PlusIcon />
-          Create Room
+          Share Code Now
+        </button>
+
+        <button
+          className="mb-8 flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+          onClick={handleJoinRoomByName}
+        >
+          Join Room
         </button>
 
         <GameRoomList rooms={rooms} onJoinRoom={handleJoinRoom} />

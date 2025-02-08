@@ -34,6 +34,20 @@ export class SharedStore {
   static getInstance(): SharedStore {
     if (!SharedStore.instance) {
       SharedStore.instance = new SharedStore();
+
+      setInterval(() => {
+        const allRooms = Array.from(SharedStore.instance.games.values());
+        for (const room of allRooms) {
+          const { createdAt } = room;
+          if (
+            Date.now() - createdAt.getTime() > 3600000 ||
+            (Object.keys(room.players).length === 0 &&
+              Date.now() - createdAt.getTime() > 300)
+          ) {
+            SharedStore.instance.removeGameRoom(room.id);
+          }
+        }
+      }, 500);
     }
     return SharedStore.instance;
   }

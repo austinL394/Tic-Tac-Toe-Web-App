@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Server as SocketIOServer, Socket } from "socket.io";
 
 import { BaseService } from "./baseService";
-import { GameRoom, MovePayload, UserStatus } from "../../types";
+import { GameRoom, UserStatus } from "../../types";
 import { SharedStore } from "../store/sharedStore";
 
 /**
@@ -17,24 +17,64 @@ export class GameService extends BaseService {
   setupEvents(socket: Socket) {
     const userId = socket.data.userId;
 
-    socket.on("game:create_room", () => this.handleCreateRoom(socket, userId));
+    socket.on("game:create_room", (name: string) => this.handleCreateRoom(socket, userId, name));
     socket.on("game:join_room", (roomId: string) =>
       this.handleJoinRoom(socket, userId, roomId)
+    );
+    socket.on(
+      "game:join_request_reply",
+      (roomId: string, applicantId: string, acceptOrDecline: boolean) => {
+        const user = SharedStore.getInstance().getUser(applicantId);
+        user.socketIds.forEach((socketId) => {
+          this.io.sockets.sockets
+            .get(socketId)
+            .emit("game:join_request_replied", roomId, acceptOrDecline);
+        });
+      }
     );
     socket.on("game:room_leave", (roomId: string) =>
       this.handleLeaveRoom(socket, userId, roomId)
     );
     socket.on("game:room_list", () => this.handleGetRoomList(socket));
-    socket.on("game:toggle_ready", (roomId: string) =>
-      this.handleToggleReady(socket, userId, roomId)
+
+    socket.on("game:update_content", (newContent: string) =>
+      this.handleUpdateCode(socket, userId, newContent)
     );
-    socket.on("game:make_move", (moveData: MovePayload) =>
-      this.handleMove(socket, userId, moveData)
-    );
-    socket.on("game:request_rematch", (roomId: string) =>
-      this.handleRematchRequest(socket, userId, roomId)
-    );
+    socket.on("game:request_join_room", (roomId: string) => {
+      const room = SharedStore.getInstance().getGameRoom(roomId);
+      const user = SharedStore.getInstance().getUser(room.hostId);
+      if (!user || !room) {
+        return;
+      }
+      user.socketIds.forEach((socketId) => {
+        this.io.sockets.sockets
+          .get(socketId)
+          .emit("game:join_requested", userId, roomId);
+      });
+    });
+
+    socket.on("game:kick_player", (roomId: string, userId: string) => {
+      this.handleKickPlayer(socket, roomId, userId);
+    });
     socket.on("disconnect", () => this.handleDisconnect(socket, userId));
+  }
+
+  handleKickPlayer(socket: Socket, roomId: string, userId: string) {
+    const user = SharedStore.getInstance().getUser(userId);
+    user.socketIds.forEach((socketId) => {
+      const targetedSocket = this.io.sockets.sockets.get(socketId);
+      this.handleLeaveRoom(targetedSocket, userId, roomId);
+    });
+  }
+
+  handleUpdateCode(socket: Socket, userId: string, code: string) {
+    const existingRoom = this.findUserRoom(userId);
+    if (existingRoom) {
+      existingRoom.content = code;
+      this.store.setGameRoom(existingRoom.id, existingRoom);
+      this.io.to(existingRoom.id).emit("game:room_state", existingRoom);
+      return;
+    }
   }
 
   /**
@@ -56,7 +96,7 @@ export class GameService extends BaseService {
    * @example
    * socket.emit('game:create_room')
    */
-  private handleCreateRoom(socket: Socket, userId: string) {
+  private handleCreateRoom(socket: Socket, userId: string, roomName: string) {
     try {
       const user = this.store.getUser(userId);
       if (!user) {
@@ -74,18 +114,18 @@ export class GameService extends BaseService {
       const gameRoom: GameRoom = {
         id: roomId,
         hostId: userId,
+        name: roomName,
         players: {
           [userId]: {
-            symbol: "X",
             username: user.username,
             firstName: user.firstName,
             lastName: user.lastName,
-            ready: false,
           },
         },
         status: "waiting",
         board: Array(9).fill(null),
-        lastMoveAt: new Date(),
+        createdAt: new Date(),
+        content: "",
       };
 
       socket.join(roomId);
@@ -139,34 +179,17 @@ export class GameService extends BaseService {
 
       const playerIds = Object.keys(gameRoom.players);
 
-      if (playerIds.length >= 2) {
-        if (playerIds.includes(userId)) {
-          socket.emit("game:warning", "You've already joined the room");
-        } else {
-          if (gameRoom.status === "waiting") {
-            socket.emit("game:error", "Room is full");
-          } else if (gameRoom.status === "playing") {
-            socket.emit("game:error", "Game already in progress");
-          }
-          return;
-        }
-      }
-
-      let symbol: "O" | "X" = "O";
-      let ready = gameRoom.players[user.userId]?.ready || false;
-
-      if (gameRoom.hostId === user.userId) {
-        socket.emit("game:error", "You are the host of the game room.");
-        symbol = "X";
+      if (playerIds.includes(userId)) {
+        socket.emit("game:warning", "You've already joined the room");
+      } else {
+        if (playerIds.length === 5) socket.emit("game:error", "Room is full");
       }
 
       // Add player to game room
       gameRoom.players[userId] = {
-        symbol: symbol,
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
-        ready: ready,
       };
 
       try {
@@ -196,171 +219,6 @@ export class GameService extends BaseService {
       );
     }
   }
-
-  /**
-   * Handles a player's move in an active game room
-   *
-   * @param {Socket} socket - The client's active socket connection
-   * @param {string} userId - Unique identifier of the player making the move
-   * @param {Object} moveDetails - Details of the player's move
-   * @property {number} moveDetails.position - Board position (0-8) where the player places their symbol
-   * @property {string} moveDetails.roomId - Unique identifier of the game room
-   *
-   * @throws {Error} Throws errors during move validation and processing
-   *
-   * @returns {void}
-   *
-   * @description
-   * - Validates move legality and game state
-   * - Updates game board and player turns
-   * - Checks for game completion (win/draw)
-   * - Manages room and player state transitions
-   *
-   * @example
-   * socket.emit('game:make_move', {
-   *   position: 4,  // Center of the board
-   *   roomId: 'room123'
-   * })
-   */
-  private handleMove(
-    socket: Socket,
-    userId: string,
-    { position, roomId }: MovePayload
-  ) {
-    try {
-      const gameRoom = this.store.getGameRoom(roomId);
-
-      if (!gameRoom) {
-        socket.emit("game:room_not_found");
-        return;
-      }
-
-      if (gameRoom.status !== "playing") {
-        socket.emit("game:error", "Game is not in progress");
-        return;
-      }
-
-      if (gameRoom.currentTurn !== userId) {
-        socket.emit("game:error", "Not your turn");
-        return;
-      }
-
-      if (position < 0 || position > 8 || gameRoom.board[position] !== null) {
-        socket.emit("game:error", "Invalid move");
-        return;
-      }
-
-      const playerSymbol = gameRoom.players[userId].symbol;
-      gameRoom.board[position] = playerSymbol;
-
-      const gameResult = this.checkGameResult(gameRoom.board);
-
-      if (gameResult.hasResult) {
-        gameRoom.status = "finished";
-        gameRoom.winner = gameResult.isDraw ? "draw" : userId;
-
-        Object.keys(gameRoom.players).forEach((playerId) => {
-          this.store.updateUser(playerId, { status: UserStatus.ONLINE });
-        });
-      } else {
-        const playerIds = Object.keys(gameRoom.players);
-        gameRoom.currentTurn = playerIds.find((id) => id !== userId)!;
-      }
-
-      this.store.setGameRoom(roomId, gameRoom);
-      this.io.to(roomId).emit("game:room_state", gameRoom);
-
-      if (gameRoom.status === "finished") {
-        this.broadcastRoomList();
-      }
-    } catch (error) {
-      this.error("Error handling move:", error);
-      socket.emit("game:error", "Failed to make move");
-    }
-  }
-
-  /**
-   * Handles toggling a player's ready status in a game room
-   *
-   * @param {Socket} socket - The client's active socket connection
-   * @param {string} userId - Unique identifier of the player toggling ready status
-   * @param {string} roomId - Unique identifier of the game room
-   *
-   * @returns {void}
-   *
-   * @description
-   * - Toggles player's ready state
-   * - Checks if all players are ready to start the game
-   * - Initializes game state when both players are ready
-   * - Broadcasts updated room state
-   */
-  private handleToggleReady(socket: Socket, userId: string, roomId: string) {
-    const gameRoom = this.store.getGameRoom(roomId);
-    if (!gameRoom) {
-      socket.emit("game:room_not_found");
-      return;
-    }
-    if (!gameRoom.players[userId]) return;
-
-    gameRoom.players[userId].ready = !gameRoom.players[userId].ready;
-
-    const allPlayersReady = Object.values(gameRoom.players).every(
-      (player) => player.ready
-    );
-
-    if (allPlayersReady && Object.keys(gameRoom.players).length === 2) {
-      gameRoom.status = "playing";
-      gameRoom.currentTurn = gameRoom.hostId;
-      gameRoom.board = Array(9).fill(null);
-    }
-
-    this.store.setGameRoom(roomId, gameRoom);
-    this.io.to(roomId).emit("game:room_state", gameRoom);
-
-    if (gameRoom.status === "playing") {
-      this.broadcastRoomList();
-    }
-  }
-
-  /**
-   * Handles rematch request from a player in a finished game room
-   *
-   * @param {Socket} socket - The client's active socket connection
-   * @param {string} userId - Unique identifier of the player requesting rematch
-   * @param {string} roomId - Unique identifier of the game room
-   *
-   * @returns {void}
-   *
-   * @description
-   * - Validates rematch request for finished game
-   * - Marks player as ready for rematch
-   * - Resets game if all players are ready
-   * - Broadcasts updated room state
-   */
-  private handleRematchRequest(socket: Socket, userId: string, roomId: string) {
-    const gameRoom = this.store.getGameRoom(roomId);
-    if (!gameRoom) {
-      socket.emit("game:room_not_found");
-      return;
-    }
-    if (gameRoom.status !== "finished") return;
-
-    const player = gameRoom.players[userId];
-    if (!player) return;
-
-    player.ready = true;
-
-    const allPlayersReady = Object.values(gameRoom.players).every(
-      (p) => p.ready
-    );
-    if (allPlayersReady) {
-      this.resetGame(socket, roomId);
-    } else {
-      this.store.setGameRoom(roomId, gameRoom);
-      this.io.to(roomId).emit("game:room_state", gameRoom);
-    }
-  }
-
   /**
    * Handles a player leaving a game room
    *
@@ -396,7 +254,6 @@ export class GameService extends BaseService {
         }
         this.store.removeGameRoom(roomId);
       } else {
-        gameRoom.status = "waiting";
         delete gameRoom.currentTurn;
         gameRoom.board = Array(9).fill(null);
         this.store.setGameRoom(roomId, gameRoom);
@@ -447,76 +304,9 @@ export class GameService extends BaseService {
   private handleDisconnect(socket: Socket, userId: string) {
     const room = this.findUserRoom(userId);
     const user = SharedStore.getInstance().getUser(userId);
-    if (room && user.socketIds.length === 1) {
+    if (room && user && user.socketIds.length === 1) {
       this.handleLeaveRoom(socket, userId, room.id);
     }
-  }
-
-  /**
-   * Checks the game result for a Tic-Tac-Toe board
-   * Determines if there's a win or a draw
-   *
-   * @param {(string | null)[]} board - The current game board state
-   * @returns {GameResult} An object indicating game result status
-   */
-  private checkGameResult(board: (string | null)[]) {
-    const winPatterns = [
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8], // Rows
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8], // Columns
-      [0, 4, 8],
-      [2, 4, 6], // Diagonals
-    ];
-
-    for (const pattern of winPatterns) {
-      const [a, b, c] = pattern;
-      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-        return { hasResult: true, isDraw: false };
-      }
-    }
-
-    const isDraw = board.every((cell) => cell !== null);
-    return { hasResult: isDraw, isDraw };
-  }
-
-  /**
-   * Resets the game room to its initial state
-   * @param {string} socket - Socket Connection
-   * @param {string} roomId - Unique identifier of the game room to reset
-   *
-   * @returns {void}
-   *
-   * @description
-   * - Resets game room status to "waiting"
-   * - Clears the game board
-   * - Removes current turn and winner information
-   * - Resets player ready status
-   * - Updates game room in store
-   * - Broadcasts updated room state to all players
-   * - Updates global room list
-   */
-  private resetGame(socket: Socket, roomId: string) {
-    const gameRoom = this.store.getGameRoom(roomId);
-    if (!gameRoom) {
-      socket.emit("game:room_not_found");
-      return;
-    }
-
-    gameRoom.status = "waiting";
-    gameRoom.board = Array(9).fill(null);
-    gameRoom.currentTurn = undefined;
-    gameRoom.winner = undefined;
-
-    Object.keys(gameRoom.players).forEach((playerId) => {
-      gameRoom.players[playerId].ready = false;
-    });
-
-    this.store.setGameRoom(roomId, gameRoom);
-    this.io.to(roomId).emit("game:room_state", gameRoom);
-    this.broadcastRoomList();
   }
 
   /**

@@ -220,8 +220,6 @@ describe("Game Service Integration Tests", () => {
 
         clientSocket2.once("game:room_joined", () => {
           // Both players ready up
-          clientSocket1.emit("game:toggle_ready", roomId);
-          clientSocket2.emit("game:toggle_ready", roomId);
         });
 
         let moveHandler: ((gameRoom: any) => void) | null = null;

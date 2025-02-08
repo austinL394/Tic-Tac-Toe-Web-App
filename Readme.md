@@ -6,12 +6,16 @@ This is a full-stack Tic Tac Toe web application built using modern web technolo
 
 ## Features
 
-- Multiplayer Tic Tac Toe game with real-time updates using **Socket.io**.
-- Players can:
-  - **Create rooms** to host games.
-  - **Join rooms** using a unique room code for multiplayer gameplay.
-- Modern development practices leveraging TypeScript + Socket.io for real-time communication.
-- Clean UI for seamless gameplay on various devices.
+- **Live Code Collaboration**
+  - Real-time code sharing and editing
+  - Multiple users can edit simultaneously
+  - JavaScript code editor with syntax highlighting
+- **Room Management**
+  - Create private coding rooms
+  - Generate unique shareable links
+  - Room owner can admit/reject join requests
+  - Support for up to 5 concurrent users per room
+  - Kick participants functionality for room owners
 
 ---
 

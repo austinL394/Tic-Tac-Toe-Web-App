@@ -3,7 +3,15 @@ import { GameRoom, SocketEventHandlers } from '@/types';
 
 export const setupGameEvents = (
   socket: Socket,
-  { setRooms, setCurrentRoom, setGameError, navigate, toast }: SocketEventHandlers,
+  {
+    setRooms,
+    setCurrentRoom,
+    setGameError,
+    navigate,
+    toast,
+    handleGameJoinRequest,
+    handleGameJoinRequestResponse,
+  }: SocketEventHandlers,
 ) => {
   socket.on('game:room_list', (updatedRooms: GameRoom[]) => {
     setRooms(updatedRooms);
@@ -11,6 +19,7 @@ export const setupGameEvents = (
 
   socket.on('game:room_created', (room: GameRoom) => {
     setCurrentRoom(room);
+    console.log('@@@ current room updated withi', room);
     navigate(`/game/${room.id}`);
     toast.showSuccess('Game room created successfully');
   });
@@ -19,6 +28,15 @@ export const setupGameEvents = (
     setCurrentRoom(room);
     navigate(`/game/${room.id}`);
     toast.showSuccess(`Joined game room: ${room.id}`);
+  });
+
+  socket.on('game:join_requested', (userId: string, roomId: string) => {
+    handleGameJoinRequest(userId, roomId);
+  });
+
+  socket.on('game:join_request_replied', (roomId: string, acceptOrDecline: boolean) => {
+    // alert("@@@ got response!");
+    handleGameJoinRequestResponse(roomId, acceptOrDecline);
   });
 
   socket.on('game:room_not_found', () => {
@@ -33,6 +51,7 @@ export const setupGameEvents = (
   });
 
   socket.on('game:room_state', (room: GameRoom) => {
+    console.log('@@ new game room state update', room.content);
     setCurrentRoom(room);
     setRooms((prevRooms) => prevRooms.map((r) => (r.id === room.id ? room : r)));
   });
@@ -55,10 +74,6 @@ export const setupGameEvents = (
 
   socket.on('game:player_left', ({ player }) => {
     toast.showWarning(`${player.username} left the game`);
-  });
-
-  socket.on('game:player_ready', ({ player }) => {
-    toast.showInfo(`${player.username} is ready`);
   });
 
   // Game state events

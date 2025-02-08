@@ -18,20 +18,20 @@ export interface ConnectedUser {
 export interface GameRoom {
   id: string;
   hostId: string;
+  name: string
   players: {
     [userId: string]: {
-      symbol: "X" | "O";
       username: string;
       firstName: string;
       lastName: string;
-      ready: boolean;
     };
   };
   status: "waiting" | "playing" | "finished";
   board: Array<string | null>;
   currentTurn?: string;
   winner?: string;
-  lastMoveAt: Date;
+  content?: string;
+  createdAt: Date;
 }
 
 export interface MovePayload {

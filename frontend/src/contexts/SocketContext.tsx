@@ -47,6 +47,11 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     socketRef.current = socket;
     socketService.current = new MainSocketService(socket);
 
+    const handleGameJoinRequest = (userId: string, roomId: string) => {
+      const accept = confirm('Would you allow ' + userId + ' to join?');
+      socketService.current && socketService.current.game.handleGameJoinRequest(roomId, userId, accept);
+    };
+
     const handlers = {
       setOnlineUsers,
       setCurrentSession,
@@ -58,6 +63,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       user,
       toast,
       logoutSession,
+      handleGameJoinRequest,
+      handleGameJoinRequestResponse: (roomId: string, confirm: boolean) =>
+        socketService.current?.game.handleGameJoinRequestResponse(roomId, confirm),
     };
 
     socket.on('connect', () => {
@@ -162,15 +170,18 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     gameError,
     connect,
     disconnect,
+    updateCode: (code: string) => socketService.current?.game.updateCode(code),
     updateUserStatus: (status) => socketService.current?.user.updateUserStatus(status),
-    createRoom: () => socketService.current?.game.createRoom(),
+    createRoom: (name: string) => socketService.current?.game.createRoom(name),
     getRoomList: () => socketService.current?.game.getRoomList(),
     joinRoom: (roomId) => socketService.current?.game.joinRoom(roomId),
     leaveRoom: (roomId) => socketService.current?.game.leaveRoom(roomId),
-    toggleReady: (roomId) => socketService.current?.game.toggleReady(roomId),
     makeMove: (position) => currentRoom && socketService.current?.game.makeMove(currentRoom.id, position),
-    requestRematch: () => currentRoom && socketService.current?.game.requestRematch(currentRoom.id),
     logoutSocketSession: () => socketService.current?.user.logout(),
+    kickPlayer: (userId) => currentRoom && socketService.current?.game.kickPlayer(currentRoom?.id, userId),
+    handleGameJoinRequestResponse: (roomId: string, confirm: boolean) =>
+      socketService.current?.game.handleGameJoinRequestResponse(roomId, confirm),
+    requestJoinRoom: (roomId) => socketService.current?.game.requestJoinRoom(roomId),
   };
 
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;

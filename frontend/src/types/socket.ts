@@ -32,14 +32,16 @@ export interface SocketContextType {
   connect: () => void;
   disconnect: () => void;
   updateUserStatus: (status: UserStatus) => void;
-  createRoom: () => void;
+  createRoom: (name: string) => void;
   getRoomList: () => void;
   joinRoom: (roomId: string) => void;
   leaveRoom: (roomId: string) => void;
-  toggleReady: (roomId: string) => void;
   makeMove: (position: number) => void;
-  requestRematch: () => void;
   logoutSocketSession: () => void;
+  updateCode: (newCode: string) => void;
+  kickPlayer: (playerId: string) => void;
+  requestJoinRoom: (roomId: string) => void;
+  handleGameJoinRequestResponse: (roomId: string, confirm: boolean) => void;
 }
 
 interface ToastContext {
@@ -62,6 +64,8 @@ export interface SocketEventHandlers {
     username: string;
   };
   toast: ToastContext;
+  handleGameJoinRequest: (userId: string, roomId: string) => void;
+  handleGameJoinRequestResponse: (roomId: string, responseType: boolean) => void;
 }
 
 export interface UserEventHandlers {
@@ -78,17 +82,18 @@ export interface UserEventHandlers {
 export interface GameRoom {
   id: string;
   hostId: string;
+  name: string;
   players: {
     [userId: string]: {
       symbol: 'X' | 'O';
       username: string;
       firstName: string;
       lastName: string;
-      ready: boolean;
     };
   };
   status: 'waiting' | 'playing' | 'finished';
   board: Array<string | null>;
   currentTurn?: string;
   winner?: string;
+  content?: string;
 }

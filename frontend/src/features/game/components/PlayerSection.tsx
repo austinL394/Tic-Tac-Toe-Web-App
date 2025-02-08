@@ -47,26 +47,6 @@ const PlayerSection = ({
       </div>
 
       {/* Status Section */}
-      <div className={classNames('mt-4 flex flex-col', { 'items-end': isLeft, 'items-start': !isLeft })}>
-        <span
-          className={classNames(`px-3 py-1 rounded-full text-sm`, {
-            'bg-green-500/10 text-green-500': player.ready,
-            'bg-yellow-500/10 text-yellow-400': !player.ready,
-          })}
-        >
-          {player.ready ? 'Ready' : 'Not Ready'}
-        </span>
-
-        {isCurrentPlayer && isWaiting && onReadyToggle && (
-          <button
-            onClick={onReadyToggle}
-            className="mt-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
-          >
-            {player.ready ? 'Cancel Ready' : 'Ready Up'}
-          </button>
-        )}
-      </div>
-
       {/* Turn Indicator */}
       {isCurrentTurn && (
         <div className="mt-4">
